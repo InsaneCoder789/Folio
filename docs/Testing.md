@@ -132,3 +132,12 @@ Previous gate outcome: APK, lint and all 13 JVM tests passed; **all ten device t
 Expanded sources author 23 JVM and 20 device tests. New checks cover convex/in-bounds geometry, aspect ratio, margin/overlap/pair placement, actual OpenCV correction and multi-card contours, Unicode PDF extraction, invisible searchable text rendered by Android PdfRenderer, multipage typesetting, rejected misaligned text, import-OCR-export revision behaviour, correction invalidation, disk reopening, v1-to-v2 migration and connected native onboarding/library/setup/settings/search. These new tests are **pending execution**, not passed based on source inspection.
 
 `output/android/verification.json` and `device-verification.json` record the latest actual run. A fresh gate is required for this source revision. Android rendering plus PDFBox extraction is a useful compatibility probe; it does not replace checking search/copy in independent external readers. Camera hardware, external save/share UI, every native editor touch path, accessibility/large text, representative OCR accuracy, API 28-36 and physical-device behaviour remain explicit checks.
+
+
+## Backend execution pass
+
+`Backend.md` is the existing implementation document renamed at the user's request; it replaces Implementation.md, retaining six docs.
+
+The first foreground API-34 gate passed the build, 23 JVM checks and all 25 device checks, including real CameraX capture, correction, WorkManager OCR, native searchable/regenerated PDF screens and cold activity launch. PDF save descriptor ownership and the migration fixture's optional index list were corrected. Atomic batch-import and retake regression checks also passed.
+
+Independent pypdf reading then exposed missing logical word spaces in searchable output. The exporter now emits explicit separators; a regression check and independent exported-PDF verifier were added. A combined six-card/three-pair/two-sheet integration check is included in the expanded 27-device-test gate. This expanded gate is pending until its actual result is recorded below.

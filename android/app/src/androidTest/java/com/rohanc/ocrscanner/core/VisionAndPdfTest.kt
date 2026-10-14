@@ -57,6 +57,17 @@ class VisionAndPdfTest {
             try{val pixels=IntArray(595*842);bitmap.getPixels(pixels,0,595,0,0,595,842);assertEquals(0,pixels.count{Color.red(it)<240})}finally{bitmap.recycle()}
         }}}
     }}
+    @Test fun separateRecognizedWordsKeepLogicalSpaces()=runBlocking{inDirectory{dir->
+        var s=snapshot(image(dir),"Folio backend")
+        val words=JSONArray()
+        for((text,x) in listOf("Folio" to 40,"backend" to 170)) words.put(JSONObject().put("text",text).put("polygon",JSONArray("[[$x,50],[${x+100},50],[${x+100},90],[$x,90]]")))
+        s=s.copy(regions=s.regions.map{it.copy(wordsJson=words.toString())})
+        val result=ScannerPdfExporter(context).export(s,"SEARCHABLE",PageLayout.sheets(listOf(LayoutRegion("r",800,600)),false,"Stacked","A4",36f),dir)
+        PDDocument.load(File(result.path)).use{document->
+            val reader=PDFTextStripper().apply{spacingTolerance=Float.MAX_VALUE;averageCharTolerance=Float.MAX_VALUE}
+            assertTrue(reader.getText(document).contains("Folio backend"))
+        }
+    }}
     @Test fun regeneratedTextPaginatesWithoutLosingWords()=runBlocking{inDirectory{dir->
         val s=snapshot(image(dir),List(200){"Folio paragraph $it café"}.joinToString("\n"));val exporter=ScannerPdfExporter(context)
         val result=exporter.export(s,"TEXT",PageLayout.sheets(listOf(LayoutRegion("r",800,600)),false,"Stacked","A4",36f),dir)

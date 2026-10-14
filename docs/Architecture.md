@@ -157,7 +157,7 @@ Each result belongs to its source revision. Crop/rotation changes invalidate OCR
 
 Coordinate chain: oriented source pixels -> corrected region pixels -> OCR geometry -> PDF placement. Store source dimensions and transforms, not screen coordinates. Deleting a document removes its app-owned originals, derivatives, records, and exports; external shared copies remain outside the store.
 
-Field-level records, processing states, build order, and technical gates are maintained in [Implementation.md](Implementation.md). Acceptance criteria and validation evidence are maintained in [Testing.md](Testing.md).
+Field-level records, processing states, build order, and technical gates are maintained in [Backend.md](Backend.md). Acceptance criteria and validation evidence are maintained in [Testing.md](Testing.md).
 
 ## Reference artifacts and rules
 
@@ -185,9 +185,9 @@ A local browser prototype now represents this navigation and Silk visual languag
 
 ## Native implementation boundary
 
-`android/` now contains a minimal Compose integration surface, Room metadata, private image import, bundled Latin ML Kit adapter and revision-checked repository. Full native navigation, correction and PDF/card workflows remain pending. The on-device architecture needs no separate HTTP backend. See [Implementation.md](Implementation.md) for pinned dependencies and current scope.
+`android/` now contains a minimal Compose integration surface, Room metadata, private image import, bundled Latin ML Kit adapter and revision-checked repository. Full native navigation, correction and PDF/card workflows remain pending. The on-device architecture needs no separate HTTP backend. See [Backend.md](Backend.md) for pinned dependencies and current scope.
 
 
 ## Native processing increment
 
-The Kotlin sources now implement the planned component path using CameraX, OpenCV, bundled ML Kit, Room v2 and WorkManager. PDFBox Android is the provisional PDF engine; Android PdfRenderer provides an independent visual renderer, and text extraction tests check the saved text layer. Edited paragraphs use regenerated output until geometry alignment is explicitly supported. Physical-device and broader reader acceptance are still pending; see Implementation.md and Testing.md for exact evidence boundaries.
+The Kotlin sources now implement the planned component path using CameraX, OpenCV, bundled ML Kit, Room v2 and WorkManager. PDFBox Android is the provisional PDF engine; Android PdfRenderer provides an independent visual renderer, and text extraction tests check the saved text layer. Edited paragraphs use regenerated output until geometry alignment is explicitly supported. Physical-device and broader reader acceptance are still pending; see Backend.md and Testing.md for exact evidence boundaries.

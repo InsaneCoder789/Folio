@@ -14,7 +14,7 @@ import com.tom_roush.pdfbox.text.PDFTextStripper
 import kotlinx.coroutines.*
 import org.json.JSONArray
 import java.io.File
-import java.io.FileOutputStream
+import java.io.RandomAccessFile
 import java.util.UUID
 import kotlin.coroutines.coroutineContext
 import kotlin.math.*
@@ -32,7 +32,9 @@ class ScannerPdfExporter(private val context:Context) {
                 val font=context.assets.open("fonts/NotoSans-Regular.ttf").use{PDType0Font.load(document,it)}
                 if(mode=="SEARCHABLE") searchable(document,font,snapshot,sheets) else text(document,font,snapshot,sheets.first())
                 coroutineContext.ensureActive()
-                FileOutputStream(temporary).use{ document.save(it);it.flush();it.fd.sync() }
+                document.save(temporary)
+                // PDFBox owns/closes its save stream. Sync using a fresh writable descriptor.
+                RandomAccessFile(temporary,"rw").use { it.fd.sync() }
                 document.numberOfPages
             }
             // Verify the saved text layer before publishing; reader compatibility is tested separately.
@@ -76,7 +78,8 @@ class ScannerPdfExporter(private val context:Context) {
                         stream.setHorizontalScaling(width/glyphWidth*100f)
                         stream.newLineAtOffset(placement.x+minX*placement.width/sourceWidth,
                             sheet.height-placement.y-minY*placement.height/sourceHeight-height*.8f)
-                        stream.showText(value);stream.endText()
+                        // Preserve logical word separators for readers that do not infer gaps from positions.
+                        stream.showText(value+" ");stream.endText()
                     }
                 }
             }

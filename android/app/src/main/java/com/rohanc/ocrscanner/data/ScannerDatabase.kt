@@ -59,6 +59,9 @@ interface ScannerDao {
     @Transaction @Query("SELECT * FROM documents WHERE id = :id") fun observeSnapshot(id: String): Flow<DocumentSnapshot?>
     @Query("SELECT * FROM documents WHERE instr(lower(title),lower(:query)) > 0 OR EXISTS (SELECT 1 FROM regions WHERE documentId = documents.id AND instr(lower(COALESCE(reviewedText,recognizedText,'')),lower(:query)) > 0) ORDER BY updatedAt DESC")
     fun search(query: String): Flow<List<DocumentEntity>>
+    @Query("SELECT EXISTS(SELECT 1 FROM captures WHERE id = :id)") suspend fun hasCapture(id: String): Boolean
+    @Query("SELECT EXISTS(SELECT 1 FROM regions WHERE correctedPath = :path) OR EXISTS(SELECT 1 FROM exports WHERE path = :path)")
+    suspend fun hasPublishedFile(path: String): Boolean
     @Insert suspend fun insertExport(export: ExportEntity)
     @Query("DELETE FROM regions WHERE id = :id") suspend fun deleteRegion(id: String)
     @Insert suspend fun insertDocument(document: DocumentEntity)

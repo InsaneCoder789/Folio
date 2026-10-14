@@ -2,7 +2,7 @@
 
 Status: learning plan. Lessons and exercises below are planned, not completed.
 
-This file owns concepts, diagrams, worked examples, experiments, and learning observations. Build tasks belong in [Implementation.md](Implementation.md); formal validation belongs in [Testing.md](Testing.md).
+This file owns concepts, diagrams, worked examples, experiments, and learning observations. Build tasks belong in [Backend.md](Backend.md); formal validation belongs in [Testing.md](Testing.md).
 
 ## 1. Learning map
 

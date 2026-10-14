@@ -21,12 +21,12 @@ Current phase: native workflow implementation after successful foundation tests.
 | [Architecture.md](Architecture.md) | System architecture, data flow, screen map, technical decisions |
 | [Frontend.md](Frontend.md) | Frontend design prompt, screen behavior, prototype handoff |
 | [Fundamentals.md](Fundamentals.md) | Computer vision concepts and learning exercises |
-| [Implementation.md](Implementation.md) | Kotlin implementation sequence and technical validation gates |
+| [Backend.md](Backend.md) | Kotlin implementation sequence and technical validation gates |
 | [Testing.md](Testing.md) | Quality checks, acceptance criteria, validation evidence |
 
 ## Source ownership
 
-Use Architecture for system decisions and Frontend for detailed screen design. Fundamentals explains concepts; Implementation tracks later engineering work; Testing owns verification. Update affected existing files together when decisions change.
+Use Architecture for system decisions and Frontend for detailed screen design. Fundamentals explains concepts; Backend tracks engineering work; Testing owns verification. Update affected existing files together when decisions change.
 
 ## Existing artifact
 

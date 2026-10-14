@@ -1,8 +1,34 @@
-# Implementation - how we will build the scanner
+# Backend - native Kotlin implementation
 
 Status: Kotlin implementation started on 14 October 2026 with user authorization. `android/` contains the first native integration slice; the first APK/JVM/lint build passed; device acceptance remains a separate gate.
 
-This file owns implementation milestones, package responsibilities, data contracts, dependencies, technical decisions, and progress. System design lives in [Architecture.md](Architecture.md), screen behavior in [Frontend.md](Frontend.md), lessons in [Fundamentals.md](Fundamentals.md), and verification in [Testing.md](Testing.md).
+This is the existing implementation plan, renamed from Implementation.md at the user’s request. It owns the Kotlin backend, milestones, package responsibilities, data contracts, dependencies, technical decisions, and progress. System design lives in [Architecture.md](Architecture.md), screen behavior in [Frontend.md](Frontend.md), lessons in [Fundamentals.md](Fundamentals.md), and verification in [Testing.md](Testing.md).
+
+
+## Backend contract
+
+```mermaid
+flowchart LR
+    UI[Native screens] --> VM[ViewModel actions]
+    VM --> Repo[DocumentRepository]
+    Repo --> Room[Room records + revisions]
+    Repo --> Files[Private originals / derivatives]
+    Repo --> CV[OpenCV correction]
+    Repo --> OCR[ML Kit recognition]
+    Repo --> PDF[PDFBox export]
+    Worker[WorkManager OCR batch] --> Repo
+```
+
+| User action | Kotlin function | Stored effect |
+| --- | --- | --- |
+| New scan / import / retake | `create`, `importImage`, `retake` | Draft, original capture, region |
+| Detect / correct / enhance | `candidates`, `correct`, `splitCapture` | Reversible recipe and corrected image; old OCR invalidated |
+| Read / review text | `recognize`, `saveReview`, `OcrBatchWorker` | Text, word polygons, reviewed content and source revision |
+| Cards / arrangement | `addRegion`, `labelCard`, `reorder`, `layout` | Confirmed side labels, page order and placement settings |
+| Export / preview / share | `export`, Android PdfRenderer and FileProvider | Completed revision-linked PDF; explicit external grant |
+| Library / search / deletion | `observe`, `search`, `delete` | Reactive local results and retryable private-file cleanup |
+
+The Android app owns its backend on the device. The permanent browser website remains the design reference. No HTTP/cloud layer is required by the agreed architecture.
 
 ## 1. Entry criteria
 
@@ -265,3 +291,14 @@ Limits currently protect the pipeline: 12 photos per import, 48 regions per docu
 Next build gate runs 23 JVM tests and compiles 20 device tests; the device gate also executes them and installs the application explicitly before its independent launch check. The prior gate's ten device tests passed, but launch failed after instrumentation; explicit installation removes dependence on instrumentation teardown keeping the target installed. Full physical-device camera/permissions, actual external reader/share interaction, API-range coverage, large-document memory profiling and broader OCR/PDF compatibility remain release gates. OCR batches are durable; foreground correction/export is cancellable and retryable, with partial PDFs cleaned on process startup.
 
 Primary implementation references: [OpenCV Android distribution](https://opencv.org/opencv4android-usage-models/), [CameraX releases](https://developer.android.com/jetpack/androidx/releases/camera), [PDFBox Android](https://github.com/TomRoush/PdfBox-Android). Bundled Noto Sans includes its OFL license under `assets/fonts/LICENSE.txt`.
+
+
+## Current backend hardening
+
+- Multi-photo import stages files and publishes the full selection in one Room transaction; a bad photo leaves no partial selection.
+- Failed/cancelled work checks persisted file ownership before cleanup, including cancellation immediately after a database commit.
+- PDFBox closes its save stream; completed PDF bytes are now synced using a fresh writable file descriptor before validation/publication.
+- `Backend.md` replaces `Implementation.md` by explicit user request; the docs folder still has exactly six files.
+- A dedicated API-34 emulator uses an already installed system image for native UI testing. API-37 preview remains outside the current UI-test compatibility claim.
+
+Searchable text writes explicit word separators so readers can search/copy phrases without guessing spaces from positions. The independent `tools/verify_exported_pdfs.py` check uses pypdf/PDFium on synthetic outputs produced through the actual native UI.
