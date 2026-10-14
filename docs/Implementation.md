@@ -222,3 +222,8 @@ Import limits: 20 MB encoded source, 80 million source pixels, longest upright w
 Run from project root: `python3 tools/verify_android.py`. It builds the debug APK, runs JVM tests and lint, and compiles the device-test APK. Structured outcome is `output/android/verification.json`; device tests require a connected emulator/phone and a separate `./gradlew :app:connectedDebugAndroidTest` invocation from `android/`. Open `android/` in Android Studio. Local `sdk.dir` is ignored; other hosts should set their own SDK path.
 
 Official dependency references: [AGP/Kotlin compatibility](https://developer.android.com/build/kotlin-support), [Room setup](https://developer.android.com/jetpack/androidx/releases/room), [bundled OCR setup](https://developers.google.com/ml-kit/vision/text-recognition/v2/android). Next integration: run the import/OCR round trip on a device, then add manual perspective correction before PDF work.
+
+
+## Repository and continuous verification
+
+Folio uses `.github/workflows/android.yml` for APK assembly, JVM tests, lint and device-test compilation on Android-related changes. CI does not yet execute an emulator. Four additional device tests cover original retention/downsampling, EXIF orientation, corrupt-image cleanup and real bundled OCR on a synthetic Latin sample. These are acceptance probes, not an OCR accuracy benchmark. Local device verification is the next gate before perspective-correction implementation.

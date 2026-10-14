@@ -114,3 +114,8 @@ Corrected cancelled OCR navigation, saved-preview/editor return paths, inherited
 Authored 13 JVM tests for revision checks, page permutation validation, missing/duplicate card sides, pair ordering and overflow. Authored six Android/Room tests for OCR/review round trips, stale edits/results, atomic reorder, cascade deletion and cancelled work. Authored is not passed.
 
 `tools/verify_android.py` records actual build/lint/JVM results and instrumentation-APK compilation under `output/android/`. The first verification completed successfully: debug APK, all 13 JVM tests (zero failures/errors/skips), lint, and device-test APK compilation. Lint has zero errors and 13 warnings, mainly pinned dependency upgrades, kapt usage, backup-rule metadata and the initial missing launcher icon. This is not a warning-free build. No phone/emulator was connected during preflight. Device OCR accuracy, image orientation/limits, file cleanup failures, process death, full native layouts and real PDF behaviour remain unverified. Compiling device tests does not execute them.
+
+
+## Folio device gate
+
+Four new `ImagePipelineTest` cases exercise actual image import/orientation and the real ML Kit adapter. Together with the six Room cases, ten device tests are authored; execution remains pending. GitHub CI builds their APK but does not run them. The original 13 JVM tests and first lint/APK checks passed before the Folio display-name update.
