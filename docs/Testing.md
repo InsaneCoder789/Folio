@@ -84,8 +84,8 @@ These are intentional adaptations of references, not a claim of pixel-for-pixel 
 
 ### Evidence and limitations
 
-- [Structured verification results](../output/design/verification.json)
-- [Wireframe/prototype](../design/index.html)
+- Structured verification results (local artifact: `output/design/verification.json`)
+- Wireframe/prototype (local artifact: `design/index.html`)
 - Reusable regression runner: `tools/verify-design.js` for the connected Playwright runtime against the local server.
 - Browser prototypes do not prove Android device behavior, camera permissions, live CV/OCR accuracy, a real searchable PDF text layer, or Android sharing. These remain future native validation gates.
 - No production backend requests, external sharing, or cloud storage were exercised.
@@ -159,7 +159,7 @@ Independent pypdf reading then exposed missing logical word spaces in searchable
 | Desktop PDFium rendering | Both exported pages rendered and visually inspected without clipping or missing glyphs |
 | GitHub CI for native-code commit a2b150d | Passed |
 
-Evidence: [build/JVM report](../output/android/verification.json), [device report](../output/android/device-verification.json), [independent PDF report](../output/android/desktop-pdf-verification.json), [native PDF-preview capture](../output/android/acceptance/native-preview.png). The debug APK is generated at `android/app/build/outputs/apk/debug/app-debug.apk` and is intentionally excluded from Git. Test PDFs and screenshots use synthetic content.
+Evidence: build/JVM report (local artifact: `output/android/verification.json`), device report (local artifact: `output/android/device-verification.json`), independent PDF report (local artifact: `output/android/desktop-pdf-verification.json`), native PDF-preview capture (local artifact: `output/android/acceptance/native-preview.png`). The debug APK is generated at `android/app/build/outputs/apk/debug/app-debug.apk` and is intentionally excluded from Git. Test PDFs and screenshots use synthetic content.
 
 The previous five failing device checks are resolved for the supported API-34 gate: PDF file sync uses an open descriptor, the migration fixture handles tables without indexes, and Espresso runs on a supported stable Android system image. This does not establish API-37 UI-test compatibility.
 
@@ -193,9 +193,9 @@ Use `tools/verify_android_visible.py --serial emulator-5554`. It never starts/st
 - Existing Pixel_9_Pro, emulator-5554, API 37, unchanged display: **34 device tests passed**, zero failures/errors.
 - Debug build, **23 JVM tests** and lint passed; lint passing does not mean warning-free.
 - Four UI test groups cover 15 screens plus two onboarding steps, document/card navigation, 200% text and an actual 320 dp content width at 200% text.
-- [Device report](../output/android/visible-device-verification.json), [build report](../output/android/verification.json), [native screen board](../output/android/ui-parity-pixel9/screen-board.png).
+- Device report (local artifact: `output/android/visible-device-verification.json`), build report (local artifact: `output/android/verification.json`), native screen board (local artifact: `output/android/ui-parity-pixel9/screen-board.png`).
 - The same emulator remains open in the debug UI review activity. No other emulator is used. The arm64-only local debug build fits its available storage.
 
 This verifies the tested flows, not every possible state or backend completeness. Physical-camera quality, representative OCR accuracy, external save/share interaction, additional device coverage and final user acceptance remain separate. Backend completion follows page by page after this UI review.
 
-The same Pixel run produced searchable and regenerated PDFs; independent pypdf extraction and PDFium rendering passed for both synthetic exports. See [PDF report](../output/android/desktop-pdf-verification.json).
+The same Pixel run produced searchable and regenerated PDFs; independent pypdf extraction and PDFium rendering passed for both synthetic exports. See PDF report (local artifact: `output/android/desktop-pdf-verification.json`).

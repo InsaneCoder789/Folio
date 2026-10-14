@@ -161,7 +161,7 @@ Field-level records, processing states, build order, and technical gates are mai
 
 ## Reference artifacts and rules
 
-- [Architecture PDF](../output/pdf/Architecture.pdf): design-baseline snapshot.
+- Architecture PDF (local artifact: `output/pdf/Architecture.pdf`): design-baseline snapshot.
 - [Project.md](Project.md): the mandatory six-file documentation rule.
 
 ## Official references

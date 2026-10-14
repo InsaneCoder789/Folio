@@ -20,3 +20,12 @@ local.properties
 *.jks
 key.properties
 design/stitch.json
+
+# Local design references and generated verification artifacts
+/design/
+/output/
+/Start Scanner Design.command
+/tools/serve_design.py
+
+# This native Android repository does not publish HTML references
+*.html

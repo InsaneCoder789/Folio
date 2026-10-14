@@ -176,8 +176,8 @@ The supplied nine Stitch screens are visual references, not layouts to copy verb
 
 ### Design workspace
 
-- [Wireframe and prototype](../design/index.html): full flow map, 15 low-fidelity frames, interactive phone preview, and route explorer.
-- [Phone prototype](../design/prototype/index.html): isolated phone-size design for later Kotlin translation.
+- Wireframe and prototype (local artifact: `design/index.html`): full flow map, 15 low-fidelity frames, interactive phone preview, and route explorer.
+- Phone prototype (local artifact: `design/prototype/index.html`): isolated phone-size design for later Kotlin translation.
 - Local preview: run `python3 -m http.server 8770 --bind 127.0.0.1` from the `design` directory, then visit `http://127.0.0.1:8770`.
 - Serve over HTTP; the browser prototype uses JavaScript modules. Opening it through a file URL is not the supported preview path.
 - 15 functional screens remain. Boot, onboarding capture, and onboarding text are three additional entry states, for 18 distinct views.
@@ -235,7 +235,7 @@ Built-in image generation created the transparent logo, two Android onboarding c
 - Logo: `design/prototype/assets/logo.png`
 - Standalone artwork: `design/prototype/assets/capture-art.png` and `text-art.png`
 - Screen concepts: `design/concepts/onboarding-capture.png` and `onboarding-text.png`
-- Prompt set and provenance: [asset prompts](../design/asset-prompts.json)
+- Prompt set and provenance: asset prompts (local artifact: `design/asset-prompts.json`)
 
 ### Stitch connection
 
@@ -283,4 +283,6 @@ Remaining backend connections are reviewed per page after UI acceptance. Existin
 
 ### Pixel 9 native review - 15 October 2026
 
-All 15 routes and both onboarding steps now use the shared native Silk components. [Native screen board](../output/android/ui-parity-pixel9/screen-board.png). Captures cover normal text, 200% text and a 320 dp content width at 200% text on the existing Pixel 9 Pro. These are fictional review fixtures rendered through production UI components. Native UI acceptance remains with the user before further backend work.
+All 15 routes and both onboarding steps now use the shared native Silk components. Native screen board (local artifact: `output/android/ui-parity-pixel9/screen-board.png`). Captures cover normal text, 200% text and a 320 dp content width at 200% text on the existing Pixel 9 Pro. These are fictional review fixtures rendered through production UI components. Native UI acceptance remains with the user before further backend work.
+
+Reference paths in this specification refer to the preserved local design workspace. Reference HTML, concept artwork and rendered UI frames are excluded from GitHub; only Android runtime artwork remains in the repository.

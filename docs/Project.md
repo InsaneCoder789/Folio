@@ -30,12 +30,12 @@ Use Architecture for system decisions and Frontend for detailed screen design. F
 
 ## Existing artifact
 
-[Architecture PDF](../output/pdf/Architecture.pdf): 11-page design-baseline snapshot from 14 October 2026. Markdown is the current source; regenerate the PDF after substantive architecture changes when requested.
+Architecture PDF (local artifact: `output/pdf/Architecture.pdf`): 11-page design-baseline snapshot from 14 October 2026. Markdown is the current source; regenerate the PDF after substantive architecture changes when requested.
 
 
 ## Current design handoff
 
-- [Wireframe and interactive prototype](../design/index.html)
+- Wireframe and interactive prototype (local artifact: `design/index.html`)
 - [Frontend design specification](Frontend.md)
 - [Prototype verification](Testing.md)
 
@@ -117,3 +117,9 @@ Current UI delivery: all 15 native routes plus two onboarding steps implemented 
 - Use descriptive Conventional Commit subjects: `type(scope): imperative summary`. Follow with the concrete behavior, reason and actual validation in the commit body. Example: `fix(cards): persist workflow and confirm pair labels atomically`.
 - Do not rewrite published commit history merely to rename old commits. Preserve unrelated dirty release/recovery work.
 - This backend work is the current user request. The older broad goal remains paused; do not infer a goal restart.
+
+## Source repository contents - 15 October 2026
+
+GitHub contains the Kotlin app, required runtime resources, tests, build configuration, verification tools and these six documentation files. Browser reference HTML, mockups, UI frames, screenshots, exported sample PDFs and generated reports are local-only under ignored `design/` and `output/`. The existing local website and launcher remain available; fresh clones do not include them. The app logo, onboarding artwork and licensed fonts are required runtime resources and remain versioned.
+
+Before committing, run `python3 tools/verify_repository.py`. The installed local pre-commit hook runs this check automatically, including attempts to force-add ignored HTML, reference folders or generated outputs. New clones must install their own hook; the tracked verification script is portable. Use neutral, factual commit descriptions; review staged filenames and the commit message before pushing.
