@@ -1,0 +1,15 @@
+name: Repository contents
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-distribution:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check tracked source and documentation boundaries
+        run: python3 tools/verify_repository.py

@@ -14,6 +14,13 @@ def prohibited(path):
 def main():
     paths=subprocess.check_output(["git", "ls-files", "-z"],text=True).split("\0")
     blocked=[p for p in paths if p and prohibited(p)]
+    expected_docs={"docs/"+name+".md" for name in ("Project","Architecture","Frontend","Fundamentals","Backend","Testing")}
+    actual_docs={p for p in paths if p and (p.startswith("docs/") or p.lower().endswith(".md"))}
+    if actual_docs!=expected_docs:
+        print("Commit blocked: documentation must remain within the six canonical files.")
+        print("Unexpected: "+", ".join(sorted(actual_docs-expected_docs)))
+        print("Missing: "+", ".join(sorted(expected_docs-actual_docs)))
+        return 1
     if blocked:
         print("Commit blocked: local references or generated outputs are staged:")
         print("\n".join(blocked))
