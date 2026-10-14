@@ -62,7 +62,8 @@ class ScannerViewModel(application:Application,private val saved:SavedStateHandl
             saved["retake"]=false;go("04");return@work
         }
         val priorIds=current.regions.map{it.id}.toSet()
-        for(uri in uris) { repository.importImage(current.document.id,current.document.revision,uri,if(defaults.value.quality=="High")3000 else 2000);current=repository.snapshot(current.document.id) }
+        repository.importImages(current.document.id,current.document.revision,uris,if(defaults.value.quality=="High")3000 else 2000)
+        current=repository.snapshot(current.document.id)
         current.regions.firstOrNull{it.id !in priorIds}?.let{selectRegion(it.id)}
         editorReturn="08";go("04")
         } finally { temporary?.delete() }

@@ -37,23 +37,38 @@ class DocumentRepository(
         RevisionRules.requireCurrent(expectedRevision, current.document.revision)
         dao.updateDocument(current.document.copy(title = cleanTitle(title), revision = expectedRevision + 1, updatedAt = System.currentTimeMillis()))
     }
-    suspend fun importImage(id: String, expectedRevision: Long, uri: Uri, maxSide: Int = 3000) {
-        RevisionRules.requireCurrent(expectedRevision, activeSnapshot(id).document.revision)
-        val capture = images.import(id, uri, maxSide)
+    suspend fun importImage(id: String, expectedRevision: Long, uri: Uri, maxSide: Int = 3000) =
+        importImages(id, expectedRevision, listOf(uri), maxSide)
+
+    /** Stage files first; publish the whole selection in one revision-checked transaction. */
+    suspend fun importImages(id: String, expectedRevision: Long, uris: List<Uri>, maxSide: Int = 3000) {
+        require(uris.isNotEmpty() && uris.size <= 12) { "Choose between one and twelve photos." }
+        require(maxSide in listOf(2000, 3000))
+        val before = activeSnapshot(id)
+        RevisionRules.requireCurrent(expectedRevision, before.document.revision)
+        require(before.regions.size + uris.size <= 48) { "Use at most 48 pages per document." }
+        val staged = mutableListOf<CaptureEntity>()
         var committed = false
         try {
-            coroutineContext.ensureActive()
+            for (uri in uris) {
+                coroutineContext.ensureActive()
+                staged.add(images.import(id, uri, maxSide))
+            }
             database.withTransaction {
                 val current = activeSnapshot(id)
                 RevisionRules.requireCurrent(expectedRevision, current.document.revision)
-                dao.insertCapture(capture)
-                require(current.regions.size < 48) { "Use at most 48 pages per document." }
-                dao.insertRegion(RegionEntity(UUID.randomUUID().toString(), capture.id, id, current.regions.size))
+                staged.forEachIndexed { index, capture ->
+                    dao.insertCapture(capture)
+                    dao.insertRegion(RegionEntity(UUID.randomUUID().toString(), capture.id, id, current.regions.size + index))
+                }
                 touch(current.document)
             }
             committed = true
         } finally {
-            if (!committed) withContext(NonCancellable) { images.removeCapture(capture) }
+            if (!committed) withContext(NonCancellable + Dispatchers.IO) {
+                // Cancellation can arrive immediately after SQLite commits. Never remove committed files.
+                for (capture in staged) if (!dao.hasCapture(capture.id)) images.removeCapture(capture)
+            }
         }
     }
     suspend fun retake(id:String,expectedRevision:Long,regionId:String,uri:Uri) {
@@ -70,7 +85,7 @@ class DocumentRepository(
                     textRevision=old.textRevision+1,ocrRevision=null,recognizedText=null,reviewedText=null,wordsJson="[]"))
                 touch(now.document)
             };committed=true
-        } finally { if(!committed)withContext(NonCancellable){images.removeCapture(capture)} }
+        } finally { if(!committed)withContext(NonCancellable + Dispatchers.IO){if(!dao.hasCapture(capture.id))images.removeCapture(capture)} }
     }
     suspend fun recognize(id: String, regionId: String) {
         val source = activeSnapshot(id)
@@ -129,7 +144,7 @@ class DocumentRepository(
                     imageRevision=region.imageRevision+1,textRevision=region.textRevision+1,ocrRevision=null,recognizedText=null,reviewedText=null,wordsJson="[]"))
                 touch(now.document)
             };committed=true
-        } finally { if(!committed) File(output.path).delete() }
+        } finally { if(!committed) removeUnpublishedFiles(listOf(output.path)) }
     }
     suspend fun candidates(id:String, regionId:String): List<Quad> {
         val current=activeSnapshot(id);val region=current.regions.single{it.id==regionId};val capture=current.captures.single{it.id==region.captureId}
@@ -153,7 +168,7 @@ class DocumentRepository(
                     cornersJson=JSONArray().apply{quads[i].points.forEach{put(JSONArray().put(it.x.toDouble()).put(it.y.toDouble()))}}.toString())) }
                 touch(now.document)
             };committed=true
-        } finally { if(!committed) outputs.forEach{File(it.path).delete()} }
+        } finally { if(!committed) removeUnpublishedFiles(outputs.map{it.path}) }
     }
     suspend fun labelCard(id:String, expectedRevision:Long, regionId:String, side:String, label:String) = database.withTransaction {
         require(side in CardSide.entries.map{it.name});require(label.length<=80)
@@ -193,7 +208,7 @@ class DocumentRepository(
                 RevisionRules.requireCurrent(expectedRevision,activeSnapshot(id).document.revision)
                 dao.insertExport(result)
             };committed=true;return result
-        } finally { if(!committed) File(result.path).delete() }
+        } finally { if(!committed) removeUnpublishedFiles(listOf(result.path)) }
     }
     suspend fun lab(id:String,regionId:String,stage:String):ProcessedImage {
         require(stage in listOf("Grayscale","Edges","Threshold"))
@@ -212,6 +227,9 @@ class DocumentRepository(
             images.removeDocument(id)
             dao.delete(id)
         }
+    }
+    private suspend fun removeUnpublishedFiles(paths: List<String>) = withContext(NonCancellable + Dispatchers.IO) {
+        for (path in paths) if (!dao.hasPublishedFile(path)) File(path).delete()
     }
     private suspend fun activeSnapshot(id: String): DocumentSnapshot {
         val current = snapshot(id)
