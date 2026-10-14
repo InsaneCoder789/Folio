@@ -227,3 +227,5 @@ Official dependency references: [AGP/Kotlin compatibility](https://developer.and
 ## Repository and continuous verification
 
 Folio uses `.github/workflows/android.yml` for APK assembly, JVM tests, lint and device-test compilation on Android-related changes. CI does not yet execute an emulator. Four additional device tests cover original retention/downsampling, EXIF orientation, corrupt-image cleanup and real bundled OCR on a synthetic Latin sample. These are acceptance probes, not an OCR accuracy benchmark. Local device verification is the next gate before perspective-correction implementation.
+
+Local device command: `python3 tools/verify_android_device.py --avd Pixel_9_Pro`. Uses only the existing installed AVD in a read-only headless instance, runs the build and ten device tests, then checks activity launch and captures a screenshot. It terminates only the emulator instance it started. The installed AVD currently uses API 37; results will not prove API 28-36 coverage or physical-device behaviour. Results are recorded separately in `output/android/device-verification.json`.
