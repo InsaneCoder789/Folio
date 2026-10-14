@@ -119,3 +119,5 @@ Authored 13 JVM tests for revision checks, page permutation validation, missing/
 ## Folio device gate
 
 Four new `ImagePipelineTest` cases exercise actual image import/orientation and the real ML Kit adapter. Together with the six Room cases, ten device tests are authored; execution remains pending. GitHub CI builds their APK but does not run them. The original 13 JVM tests and first lint/APK checks passed before the Folio display-name update.
+
+The local native gate runs via `tools/verify_android_device.py` on the existing read-only Pixel_9_Pro AVD (API 37). Its structured report distinguishes test execution from APK compilation and activity launch; native UI interaction coverage and broader device/API coverage remain separate.
