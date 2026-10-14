@@ -1,0 +1,22 @@
+tmp/
+__pycache__/
+.DS_Store
+.playwright-mcp/
+
+# Native Android local state and outputs
+.gradle/
+.kotlin/
+**/build/
+local.properties
+*.iml
+.idea/
+
+# Local logs, credentials and integration metadata
+*.log
+.env
+.env.*
+!.env.example
+*.keystore
+*.jks
+key.properties
+design/stitch.json
