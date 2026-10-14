@@ -87,7 +87,7 @@ try:
     time.sleep(3)
     process = run([adb, '-s', serial, 'shell', 'pidof', 'com.rohanc.ocrscanner'], capture_output=True)
     if not process.stdout.strip(): raise RuntimeError('App exited after launch.')
-    with (output / 'device-library.png').open('wb') as stream:
+    with (output / 'device-launch.png').open('wb') as stream:
         subprocess.run([adb, '-s', serial, 'exec-out', 'screencap', '-p'], stdout=stream, check=True)
     report['status'] = 'passed'; exit_code = 0
 except Exception as error:
