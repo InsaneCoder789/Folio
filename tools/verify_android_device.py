@@ -73,13 +73,20 @@ try:
         suite = ET.parse(path).getroot()
         for key in counts: counts[key] += int(suite.get(key, '0'))
     report['deviceTests'] = counts
-    if result.returncode or counts['tests'] < 10 or counts['failures'] or counts['errors'] or counts['skipped']:
+    if result.returncode or counts['tests'] < 20 or counts['failures'] or counts['errors'] or counts['skipped']:
         raise RuntimeError('Device tests did not all pass; inspect device-tests.log and Gradle reports.')
+    # Connected instrumentation may uninstall its target during teardown.
+    # Install the app explicitly before the independent launch gate.
+    run([adb, '-s', serial, 'install', '-r', str(root / 'android/app/build/outputs/apk/debug/app-debug.apk')], capture_output=True)
     launch = run([adb, '-s', serial, 'shell', 'am', 'start', '-W', '-n',
         'com.rohanc.ocrscanner/.MainActivity'], capture_output=True)
+    report['launchOutput'] = launch.stdout
     if 'Status: ok' not in launch.stdout:
         raise RuntimeError('Activity launch was not confirmed.')
     report['activityLaunched'] = True
+    time.sleep(3)
+    process = run([adb, '-s', serial, 'shell', 'pidof', 'com.rohanc.ocrscanner'], capture_output=True)
+    if not process.stdout.strip(): raise RuntimeError('App exited after launch.')
     with (output / 'device-library.png').open('wb') as stream:
         subprocess.run([adb, '-s', serial, 'exec-out', 'screencap', '-p'], stdout=stream, check=True)
     report['status'] = 'passed'; exit_code = 0

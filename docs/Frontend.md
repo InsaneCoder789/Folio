@@ -253,3 +253,8 @@ A connected design baseline is available for user review. Browser interaction ch
 The design website is a permanent project deliverable, retained at the user's explicit request. `Start Scanner Design.command` opens it; `tools/serve_design.py` serves the same source without third-party packages. Keep this website through the later Kotlin build. Existing documentation remains restricted to the six files in `/docs`.
 
 Review screenshots are saved in `output/design/`: `overview.png`, `wireframe.png`, `workspace.png`, and `screens/`. These are reference images; the website remains interactive.
+
+
+## Native integration increment
+
+`android/` now authors the 15 functional routes, shared error/confirm states, brief logo reveal and two skippable onboarding steps. Native controls are connected to private import, CameraX, correction, OCR, review, pairing, layout and actual PDF adapters. This is an initial native implementation of the permanent browser reference; screen-by-screen visual/device parity has not yet been accepted. Searchable generation explains the restriction on rewritten paragraphs; PDF preview labels previous exports when newer edits exist. The website is retained unchanged by this native increment.

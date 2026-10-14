@@ -20,7 +20,7 @@ class PrivateImageStore(private val context: Context) {
         UUID.fromString(id)
         return File(root, id)
     }
-    suspend fun import(documentId: String, uri: Uri): CaptureEntity = withContext(Dispatchers.IO) {
+    suspend fun import(documentId: String, uri: Uri, maxSide: Int = 3000): CaptureEntity = withContext(Dispatchers.IO) {
         val dir = directory(documentId).apply { mkdirs() }
         val id = UUID.randomUUID().toString()
         val original = File(dir, "$id.source")
@@ -44,7 +44,7 @@ class PrivateImageStore(private val context: Context) {
             val bitmap = ImageDecoder.decodeBitmap(ImageDecoder.createSource(original)) { decoder, info, _ ->
                 val w = info.size.width; val h = info.size.height
                 require(w > 0 && h > 0 && w.toLong() * h <= 80_000_000) { "Image dimensions are too large." }
-                val scale = minOf(1.0, 3000.0 / max(w, h))
+                val scale = minOf(1.0, maxSide.toDouble() / max(w, h))
                 decoder.setTargetSize(max(1, (w * scale).roundToInt()), max(1, (h * scale).roundToInt()))
                 decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
                 decoder.setOnPartialImageListener { false }
@@ -61,6 +61,7 @@ class PrivateImageStore(private val context: Context) {
             throw failure
         }
     }
+    fun documentDirectory(id: String) = directory(id)
     suspend fun removeCapture(capture: CaptureEntity) = withContext(Dispatchers.IO) {
         File(capture.originalPath).delete(); File(capture.uprightPath).delete(); Unit
     }
