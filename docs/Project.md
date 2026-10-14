@@ -2,7 +2,7 @@
 
 Folio is a native Android scanner built in Kotlin and Jetpack Compose. Supports document correction, on-device OCR, searchable scan PDFs, regenerated text PDFs, front/back card pairing, and multiple-card page layouts.
 
-Current phase: native UI alignment with the approved browser wireframe/prototype. Backend expansion and release work are deferred until this visual and navigation pass is reviewed. Existing Kotlin engines remain intact.
+Current phase: the user accepted the native UI on 15 October 2026. Complete the non-ML Kotlin workflow and every screen connection next; custom OCR/model training, tuning and accuracy evaluation come last. Preserve the approved UI and browser reference.
 
 ## Documentation rules
 
@@ -109,3 +109,11 @@ Use only the user's already-running **Pixel_9_Pro** emulator (`emulator-5554`, c
 Run `python3 tools/verify_android_visible.py --serial emulator-5554`. This installs with replacement, runs instrumentation directly, records actual results and leaves the same emulator open in native UI review. The old isolated-AVD runner is retained as historical tooling; it is not the authorized workflow for this work.
 
 Current UI delivery: all 15 native routes plus two onboarding steps implemented against the approved prototype; 34 device tests and 23 JVM tests passed on the existing Pixel 9 Pro. See Frontend.md and Testing.md. User acceptance of this native pass precedes the next page-by-page backend increment.
+
+## Repository policy - 15 October 2026
+
+- Keep only `main`, locally and on GitHub. Both old feature/fix branches were deleted. A private local Git bundle in `.git/folio-branches-before-cleanup.bundle` preserves their history.
+- Push completed, verified changes directly to `main`. No feature branches or PRs unless explicitly requested.
+- Use descriptive Conventional Commit subjects: `type(scope): imperative summary`. Follow with the concrete behavior, reason and actual validation in the commit body. Example: `fix(cards): persist workflow and confirm pair labels atomically`.
+- Do not rewrite published commit history merely to rename old commits. Preserve unrelated dirty release/recovery work.
+- This backend work is the current user request. The older broad goal remains paused; do not infer a goal restart.
