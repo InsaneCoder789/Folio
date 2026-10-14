@@ -229,3 +229,39 @@ Official dependency references: [AGP/Kotlin compatibility](https://developer.and
 Folio uses `.github/workflows/android.yml` for APK assembly, JVM tests, lint and device-test compilation on Android-related changes. CI does not yet execute an emulator. Four additional device tests cover original retention/downsampling, EXIF orientation, corrupt-image cleanup and real bundled OCR on a synthetic Latin sample. These are acceptance probes, not an OCR accuracy benchmark. Local device verification is the next gate before perspective-correction implementation.
 
 Local device command: `python3 tools/verify_android_device.py --avd Pixel_9_Pro`. Uses only the existing installed AVD in a read-only headless instance, runs the build and ten device tests, then checks activity launch and captures a screenshot. It terminates only the emulator instance it started. The installed AVD currently uses API 37; results will not prove API 28-36 coverage or physical-device behaviour. Results are recorded separately in `output/android/device-verification.json`.
+
+
+## Native workflow expansion - 14 October 2026
+
+```mermaid
+flowchart LR
+    Input[CameraX / image picker] --> Source[Private original + upright copy]
+    Source --> CV[OpenCV candidates + manual corners]
+    CV --> Warp[Perspective / rotate / enhancement]
+    Warp --> Batch[Resumable WorkManager OCR]
+    Batch --> Review[Text / sides / pairs]
+    Review --> Layout[Aspect-preserving sheets]
+    Layout --> PDF[Searchable scan / typeset text]
+    PDF --> Preview[Android PdfRenderer]
+    Preview --> Share[Files picker / FileProvider share]
+```
+
+| Source implementation | Current boundary |
+| --- | --- |
+| Native S01-S15, boot/onboarding, CameraX permission/preview/capture and import | Authored; new UI/device verification pending |
+| OpenCV 4.12.0 contour candidates, convex manual quad, warp, quarter rotation, grayscale/adaptive threshold | Real processing; representative photos/device calibration pending |
+| Region revisions, immutable originals, retake, multi-region capture, reorder/remove, reviewed text, persistent preferences | Room v2 with automatic v1 migration; migration test authored |
+| WorkManager 2.10.1 recognition batches | Resumes unread regions; cancellation rejects late OCR commits |
+| Card pairing, stacked/side-by-side/grid, A4/Letter and margins | Manual sides/labels; unknown physical dimensions are scaled to fit, never claimed life-size |
+| PDFBox Android 2.0.27.0 + bundled Noto Sans | Provisional engine; real invisible text and embedded Unicode font, real paragraph output |
+| PDF preview, Files picker save, FileProvider open/share | Native adapters authored; reader/device interaction gate pending |
+
+All edits invalidate current export eligibility through the document revision. Completed exports remain available and are labeled previous when newer edits exist. OCR is tied to corrected image dimensions; correction/retake clears old recognized text. Original/corrected images stay private. Only a completed selected PDF is granted for external sharing.
+
+Searchable exports use original recognized words and positions. If saved review text differs, searchable generation refuses the rewrite and directs users to regenerated output. This avoids claiming alignment that was never computed. Regenerated text supports the bundled font's characters and simple single-column flow; it does not reconstruct tables, handwriting or original typography. Unsupported characters fail explicitly.
+
+Limits currently protect the pipeline: 12 photos per import, 48 regions per document, 12 automatic candidates per photograph, 3000/2000-pixel working images. Automatic candidates require review. Learning-lab images are real grayscale/edge/threshold output. Corrections work from the retained upright copy so repeated edits do not compound JPEG filtering.
+
+Next build gate runs 23 JVM tests and compiles 20 device tests; the device gate also executes them and installs the application explicitly before its independent launch check. The prior gate's ten device tests passed, but launch failed after instrumentation; explicit installation removes dependence on instrumentation teardown keeping the target installed. Full physical-device camera/permissions, actual external reader/share interaction, API-range coverage, large-document memory profiling and broader OCR/PDF compatibility remain release gates. OCR batches are durable; foreground correction/export is cancellable and retryable, with partial PDFs cleaned on process startup.
+
+Primary implementation references: [OpenCV Android distribution](https://opencv.org/opencv4android-usage-models/), [CameraX releases](https://developer.android.com/jetpack/androidx/releases/camera), [PDFBox Android](https://github.com/TomRoush/PdfBox-Android). Bundled Noto Sans includes its OFL license under `assets/fonts/LICENSE.txt`.

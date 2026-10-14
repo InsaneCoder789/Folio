@@ -1,0 +1,14 @@
+{
+  "timestamp": "2026-10-14T15:05:05.439513+00:00",
+  "avd": "Pixel_9_Pro",
+  "status": "failed",
+  "deviceTests": {
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "activityLaunched": false,
+  "sdkInt": "37",
+  "error": "Command '['/Users/rohanc/Library/Android/sdk/platform-tools/adb', '-s', 'emulator-5556', 'shell', 'am', 'start', '-W', '-n', 'com.rohanc.ocrscanner/.MainActivity']' returned non-zero exit status 1."
+}

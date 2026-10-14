@@ -2,7 +2,7 @@
 
 Folio is a native Android scanner built in Kotlin and Jetpack Compose. Supports document correction, on-device OCR, searchable scan PDFs, regenerated text PDFs, front/back card pairing, and multiple-card page layouts.
 
-Current phase: Kotlin native foundation implementation, authorized after frontend review. The permanent design website remains the visual reference.
+Current phase: native workflow implementation after successful foundation tests. The permanent design website remains the visual reference.
 
 ## Documentation rules
 
@@ -52,3 +52,8 @@ Double-click `Start Scanner Design.command` to start/open the website. Alternati
 ## Public repository
 
 Product/repository name: **Folio**. GitHub: https://github.com/InsaneCoder789/Folio. The local workspace remains `OCR Scanner`; no project files were moved. Initial Android application ID remains `com.rohanc.ocrscanner` to preserve install identity. Historical screen artwork and architecture PDF retain their original working title. Credentials, local SDK paths, build outputs, signing keys, logs and local integration metadata stay out of Git.
+
+
+## Native workflow expansion
+
+The next native increment authors all 15 functional routes plus first-run entry, CameraX capture, manual/automatic boundaries, OpenCV correction and enhancement, text review, manual card pairing, PDF placement, actual searchable/text PDF export, preview, save/share, local search/settings and an optional processing lab. WorkManager handles resumable OCR batches. These expanded sources require a fresh build and device gate before being treated as working acceptance evidence. The permanent website remains alongside the Android app.

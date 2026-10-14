@@ -123,3 +123,12 @@ Four new `ImagePipelineTest` cases exercise actual image import/orientation and 
 The local native gate runs via `tools/verify_android_device.py` on the existing read-only Pixel_9_Pro AVD (API 37). Its structured report distinguishes test execution from APK compilation and activity launch; native UI interaction coverage and broader device/API coverage remain separate.
 
 Initial GitHub CI stopped during SDK setup because the action requested the removed `tools` package. Updated setup to install `platform-tools` explicitly; the replacement run remains unverified until GitHub completes it.
+
+
+## Native workflow gate - 14 October 2026
+
+Previous gate outcome: APK, lint and all 13 JVM tests passed; **all ten device tests passed** on API 37. The overall gate failed only at the separate activity-launch command after connected-test teardown. Launch output had not been recorded, so app runtime failure versus target teardown cannot be concluded from the old report. The runner now explicitly installs the APK, records launch output, and checks that its process remains alive. Latest foundation GitHub CI also passed after the SDK setup correction.
+
+Expanded sources author 23 JVM and 20 device tests. New checks cover convex/in-bounds geometry, aspect ratio, margin/overlap/pair placement, actual OpenCV correction and multi-card contours, Unicode PDF extraction, invisible searchable text rendered by Android PdfRenderer, multipage typesetting, rejected misaligned text, import-OCR-export revision behaviour, correction invalidation, disk reopening, v1-to-v2 migration and connected native onboarding/library/setup/settings/search. These new tests are **pending execution**, not passed based on source inspection.
+
+`output/android/verification.json` and `device-verification.json` record the latest actual run. A fresh gate is required for this source revision. Android rendering plus PDFBox extraction is a useful compatibility probe; it does not replace checking search/copy in independent external readers. Camera hardware, external save/share UI, every native editor touch path, accessibility/large text, representative OCR accuracy, API 28-36 and physical-device behaviour remain explicit checks.

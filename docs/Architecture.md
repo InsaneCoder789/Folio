@@ -186,3 +186,8 @@ A local browser prototype now represents this navigation and Silk visual languag
 ## Native implementation boundary
 
 `android/` now contains a minimal Compose integration surface, Room metadata, private image import, bundled Latin ML Kit adapter and revision-checked repository. Full native navigation, correction and PDF/card workflows remain pending. The on-device architecture needs no separate HTTP backend. See [Implementation.md](Implementation.md) for pinned dependencies and current scope.
+
+
+## Native processing increment
+
+The Kotlin sources now implement the planned component path using CameraX, OpenCV, bundled ML Kit, Room v2 and WorkManager. PDFBox Android is the provisional PDF engine; Android PdfRenderer provides an independent visual renderer, and text extraction tests check the saved text layer. Edited paragraphs use regenerated output until geometry alignment is explicitly supported. Physical-device and broader reader acceptance are still pending; see Implementation.md and Testing.md for exact evidence boundaries.

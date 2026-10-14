@@ -123,3 +123,16 @@ For each completed exercise, append a short entry here with: lesson ID, input, c
 ## 8. References and boundaries
 
 Use the official references maintained in [Architecture.md](Architecture.md). Follow the six-file documentation rule in [Project.md](Project.md). Formal test procedures and results stay in [Testing.md](Testing.md).
+
+
+## Learn from the native pipeline
+
+```mermaid
+flowchart LR
+    G[Validate a convex quad] --> H[Perspective mapping]
+    H --> E[Enhance pixels]
+    E --> O[Recognize words in output pixels]
+    O --> P[Scale word boxes into PDF points]
+```
+
+Trace `core/Geometry.kt`, `core/vision/OpenCvProcessor.kt` and `core/pdf/ScannerPdfExporter.kt`. Compare grayscale, edges and threshold output in S15. Check why crossing corners are rejected and why paragraph rewrites cannot reuse old word positions. Unit/device test cases are executable examples; broader real-photo accuracy must still be measured.
