@@ -1,10 +1,14 @@
 {
-  "timestamp": "2026-10-14T16:23:08.817173+00:00",
-  "sourceRevision": "a2b150d7574d16f98a1eb53c6074e6e176091b4e",
+  "timestamp": "2026-10-14T18:56:22.073618+00:00",
+  "sourceRevision": "24e3b779c36056565f0beba8fd53cc9fa6e20dc1",
+  "javaHome": "/Library/Java/JavaVirtualMachines/jdk-22.jdk/Contents/Home",
+  "abi": "arm64-v8a",
+  "sourceDirty": true,
   "command": [
     "./gradlew",
     "--no-daemon",
     "--console=plain",
+    "-PfolioAbis=arm64-v8a",
     ":app:assembleDebug",
     ":app:testDebugUnitTest",
     ":app:lintDebug",
@@ -22,5 +26,5 @@
   "instrumentationNote": "Device tests are compiled only. Connect an emulator/phone to execute them.",
   "buildLog": "output/android/build.log",
   "apk": "android/app/build/outputs/apk/debug/app-debug.apk",
-  "apkSha256": "035cc403841d806babba4fca304fead9486e63264908e85cd174c07ddbcddb2f"
+  "apkSha256": "72ff07383a8733d6cff9ad8a16358aee054bfe936f2a7f429e679e41b9fcc563"
 }

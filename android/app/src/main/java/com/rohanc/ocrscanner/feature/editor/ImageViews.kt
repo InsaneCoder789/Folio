@@ -26,14 +26,14 @@ import java.io.File
 import kotlin.math.*
 
 @Composable
-fun ScanImage(path:String,description:String,modifier:Modifier=Modifier,maxSide:Int=1000) {
+fun ScanImage(path:String,description:String,modifier:Modifier=Modifier,maxSide:Int=1000,colorFilter:androidx.compose.ui.graphics.ColorFilter?=null) {
     var loaded by remember(path,maxSide){mutableStateOf(false)}
     val bitmap by produceState<Bitmap?>(null,path,maxSide){value=null;loaded=false;value=withContext(Dispatchers.IO){
         val info=BitmapFactory.Options().apply{inJustDecodeBounds=true};BitmapFactory.decodeFile(path,info)
         val options=BitmapFactory.Options().apply{inSampleSize=1};while(max(info.outWidth,info.outHeight)/options.inSampleSize>maxSide)options.inSampleSize*=2
         BitmapFactory.decodeFile(path,options)
     };loaded=true}
-    if(bitmap!=null) Image(bitmap!!.asImageBitmap(),description,modifier,contentScale=ContentScale.Fit)
+    if(bitmap!=null) Image(bitmap!!.asImageBitmap(),description,modifier,contentScale=ContentScale.Fit,colorFilter=colorFilter)
     else Box(modifier){Text(if(loaded)"Image unavailable. Retake or import the page again." else "Loading image…")}
 }
 
@@ -65,6 +65,7 @@ fun CropEditor(path:String,width:Int,height:Int,quad:Quad,onChange:(Quad)->Unit,
 
 @Composable
 fun PdfPage(path:String,index:Int,modifier:Modifier=Modifier,onError:(String)->Unit) {
+    var failureText by remember(path,index){mutableStateOf<String?>(null)}
     val bitmap by produceState<Bitmap?>(null,path,index){
         value=withContext(Dispatchers.IO){try{
             ParcelFileDescriptor.open(File(path),ParcelFileDescriptor.MODE_READ_ONLY).use{fd -> PdfRenderer(fd).use{pdf ->
@@ -73,7 +74,7 @@ fun PdfPage(path:String,index:Int,modifier:Modifier=Modifier,onError:(String)->U
                     Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888).also{it.eraseColor(android.graphics.Color.WHITE);page.render(it,null,null,PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)}
                 }
             }}
-        }catch(failure:Exception){withContext(Dispatchers.Main){onError(failure.message?:"PDF cannot be opened.")};null}}
+        }catch(failure:Exception){withContext(Dispatchers.Main){failureText=failure.message?:"PDF cannot be opened.";onError(failureText!!)};null}}
     }
-    if(bitmap!=null)Image(bitmap!!.asImageBitmap(),"PDF page ${index+1}",modifier,contentScale=ContentScale.Fit) else Box(modifier){CircularProgressIndicator()}
+    if(bitmap!=null)Image(bitmap!!.asImageBitmap(),"PDF page ${index+1}",modifier,contentScale=ContentScale.Fit) else Box(modifier){if(failureText!=null)Text("This preview could not be opened. Generate the PDF again.") else CircularProgressIndicator()}
 }

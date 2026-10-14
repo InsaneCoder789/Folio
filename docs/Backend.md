@@ -1,6 +1,8 @@
 # Backend - native Kotlin implementation
 
-Status: the Kotlin backend MVP runs on Android 14. Build/lint, 23 JVM tests and 27 device checks passed, including camera capture, correction, OCR, paired/multi-card layout and both real PDF exports. Physical-device and broader compatibility validation remain.
+Current priority: UI alignment first, then backend acceptance page by page. Existing backend capabilities are retained.
+
+Prior backend status: the Kotlin backend MVP runs on Android 14. Build/lint, 23 JVM tests and 27 device checks passed, including camera capture, correction, OCR, paired/multi-card layout and both real PDF exports. Physical-device and broader compatibility validation remain.
 
 This is the existing implementation plan, renamed from Implementation.md at the user’s request. It owns the Kotlin backend, milestones, package responsibilities, data contracts, dependencies, technical decisions, and progress. System design lives in [Architecture.md](Architecture.md), screen behavior in [Frontend.md](Frontend.md), lessons in [Fundamentals.md](Fundamentals.md), and verification in [Testing.md](Testing.md).
 
@@ -184,18 +186,20 @@ Document deletion removes app-owned originals, derivatives, records, and exports
 | Decision | Current position | Resolve when |
 | --- | --- | --- |
 | Application stack | Kotlin, Compose, CameraX, OpenCV, ML Kit, Room | Verify compatible versions during P0/P1 |
-| PDF engine | Open pending searchable-text compatibility prototype | P4; before production exporter integration |
-| Android/device baseline | Not selected | P0 |
-| OCR scripts | Latin first proposed; user requirements to confirm | P0/P3 |
+| PDF engine | PDFBox Android 2.0.27.0; Noto Sans; Android + desktop rendering passed | External reader interaction remains |
+| Android/device baseline | min 28, target/compile 36; API-34 emulator gate | Physical phone and API range remain |
+| OCR scripts | Bundled ML Kit Latin 16.0.1 | More scripts remain later scope |
 | Card families | Generic regions and manual labels first; named types to confirm | P6 |
 | Regenerated layout | Simple single-column paragraphs initially | P4 |
 | Physical-size printing | Only when dimensions are known or entered | P6 |
-| Dependency versions and permissions | Not pinned | Verify from official sources during setup |
+| Dependency versions and permissions | Versions pinned; CAMERA only; no INTERNET permission | Revisit on dependency changes |
 | Performance targets | Measure representative baseline before assigning thresholds | P2 onward; finalize in Testing.md |
 
 Use a ready OCR model first. Custom model training and automatic card pairing remain later extensions. A ready-made scanning SDK can be a comparison baseline; custom processing remains the learning path.
 
-## 8. Progress log and completion rule
+## 8. Historical progress log and completion rule
+
+The table below records the initial foundation checkpoint. Current acceptance and remaining gates are in Project.md and the verified execution section at the end of this file.
 
 | Phase | Status | Evidence |
 | --- | --- | --- |
@@ -309,3 +313,14 @@ Searchable text writes explicit word separators so readers can search/copy phras
 The native flow is now executed and verified on API 34, not just authored. `Testing.md` records the 23 JVM / 27 device results and independent exported-PDF checks. The generated debug APK is `android/app/build/outputs/apk/debug/app-debug.apk`.
 
 For the local device gate, use `python3 tools/verify_android_device.py --avd Folio_API34` with the installed API-34 AVD. The optional desktop export check is `python3 tools/verify_exported_pdfs.py`, in an environment containing pypdf and pypdfium2. Local verification used the bundled Python runtime. The isolated emulator run ends after recording its results; no website files are affected.
+
+
+## Completion-goal implementation
+
+Current acceptance gates live in Project.md. Activity recreation must retain pending crop/enhancement settings, reviewed text, active document/page and editor return destination. Screen-local scroll state must reset on route changes. Recreation checks do not prove OS process-death recovery; that remains a separate gate.
+
+Release configuration enables R8 and resource shrinking, following [Android's optimization guidance](https://developer.android.com/topic/performance/app-optimization/enable-app-optimization). `-PfolioAbis=arm64-v8a` requests a local device-specific APK; omitted, all default ABIs remain supported. The `benchmark` variant uses a separate `.benchmark` install identity and the local debug certificate. It is an optimized test candidate, not a production-signed release.
+
+Run `python3 tools/verify_android_release.py --serial emulator-5556` against a dedicated already-running test emulator. It builds/lints the optimized candidate, executes native tests, checks packaged ABIs and records measured size/runtime evidence. Release signing, physical-device acceptance and distribution remain open.
+
+`python3 tools/verify_android_device.py --avd Folio_API34 --visible --keep-open` shows the native test pass and leaves a successful emulator open with Folio launched. Default verification remains isolated/headless and closes only the emulator it created. Never wipe a user's existing emulator or app data to make a test pass.

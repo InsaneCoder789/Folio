@@ -17,9 +17,11 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import java.io.File
+import com.rohanc.ocrscanner.feature.ui.*
+import androidx.compose.ui.unit.dp
 
 @Composable
-fun CameraCapture(onCaptured:(File)->Unit,onError:(String)->Unit,onImport:()->Unit) {
+fun CameraCapture(onCaptured:(File)->Unit,onError:(String)->Unit,onImport:()->Unit,count:Int=0,thumbnails:List<String> = emptyList(),cards:Boolean=false,paired:Boolean=false,onDone:()->Unit={}) {
     val alive=remember{java.util.concurrent.atomic.AtomicBoolean(true)}
     DisposableEffect(Unit){onDispose{alive.set(false)}}
     val context=LocalContext.current;val lifecycle=LocalLifecycleOwner.current
@@ -29,8 +31,8 @@ fun CameraCapture(onCaptured:(File)->Unit,onError:(String)->Unit,onImport:()->Un
     if(!allowed) {
         Column(verticalArrangement=Arrangement.spacedBy(androidx.compose.ui.unit.Dp(16f))) {
             Text("Allow camera access to photograph documents. You can also import existing images.")
-            Button(onClick={permission.launch(Manifest.permission.CAMERA)}){Text("Allow camera")}
-            OutlinedButton(onClick=onImport){Text("Import photos")}
+            SilkButton("Allow camera","camera"){permission.launch(Manifest.permission.CAMERA)}
+            SilkButton("Import images","image",false,onClick=onImport)
             TextButton(onClick={context.startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${context.packageName}")))}){Text("Open app settings")}
         }
         return
@@ -48,17 +50,15 @@ fun CameraCapture(onCaptured:(File)->Unit,onError:(String)->Unit,onImport:()->Un
         },ContextCompat.getMainExecutor(context))
         onDispose{disposed=true;capture=null;preview?.let{provider?.unbind(it)};shot?.let{provider?.unbind(it)}}
     }
-    Column(verticalArrangement=Arrangement.spacedBy(androidx.compose.ui.unit.Dp(16f))) {
-        AndroidView(factory={view},modifier=Modifier.fillMaxWidth().weight(1f))
-        Text("Keep the entire page visible. Avoid glare and overlapping cards.")
-        Button(enabled=capture!=null && !taking,onClick={
-            val camera=capture?:return@Button;taking=true
+    CaptureUi(count,taking,capture!=null,onCapture={
+            val camera=capture?:return@CaptureUi;taking=true
             camera.targetRotation=view.display?.rotation?:android.view.Surface.ROTATION_0
             val file=File.createTempFile("folio-camera-",".jpg",context.cacheDir)
             camera.takePicture(ImageCapture.OutputFileOptions.Builder(file).build(),ContextCompat.getMainExecutor(context),object:ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(result:ImageCapture.OutputFileResults){taking=false;if(alive.get())onCaptured(file) else file.delete()}
                 override fun onError(exception:ImageCaptureException){taking=false;file.delete();if(alive.get())onError(exception.message?:"Capture failed.")}
             })
-        },modifier=Modifier.fillMaxWidth()){Text(if(taking)"Capturing…" else "Capture page")}
-    }
+        },onImport=onImport,onDone=onDone,thumbnails=thumbnails,cards=cards,paired=paired){
+            AndroidView(factory={view},modifier=Modifier.fillMaxSize())
+        }
 }

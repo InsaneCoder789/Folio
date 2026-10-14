@@ -21,12 +21,14 @@ class NativeCameraTest {
         val repo=(InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as ScannerApplication).repository
         val before=repo.library.first().map{it.id}.toSet()
         try{
-            rule.waitUntil(10000){rule.onAllNodesWithText("Skip introduction").fetchSemanticsNodes().isNotEmpty() || rule.onAllNodesWithText("Your library").fetchSemanticsNodes().isNotEmpty()}
-            if(rule.onAllNodesWithText("Skip introduction").fetchSemanticsNodes().isNotEmpty())rule.onNodeWithText("Skip introduction").performClick()
+            rule.waitUntil(10000){rule.onAllNodesWithText("Skip").fetchSemanticsNodes().isNotEmpty() || rule.onAllNodesWithText("Your library").fetchSemanticsNodes().isNotEmpty()}
+            if(rule.onAllNodesWithText("Skip").fetchSemanticsNodes().isNotEmpty())rule.onNodeWithText("Skip").performClick()
             rule.onNodeWithText("New scan").performClick();rule.onNodeWithText("Use camera").performClick()
-            rule.waitUntil(45000){rule.onAllNodes(hasText("Capture page") and isEnabled()).fetchSemanticsNodes().isNotEmpty()}
-            rule.onNodeWithText("Capture page").performClick()
-            rule.waitUntil(30000){rule.onAllNodesWithText("Apply boundaries").fetchSemanticsNodes().isNotEmpty()}
+            rule.waitUntil(45000){rule.onAllNodes(hasContentDescription("Capture page") and isEnabled()).fetchSemanticsNodes().isNotEmpty()}
+            rule.onNodeWithContentDescription("Capture page").performClick()
+            rule.waitUntil(15000){rule.onAllNodes(hasText("Done") and isEnabled()).fetchSemanticsNodes().isNotEmpty()}
+            rule.onNodeWithText("Done").performClick()
+            rule.waitUntil(30000){rule.onAllNodesWithText("Apply & straighten").fetchSemanticsNodes().isNotEmpty()}
             val created=repo.library.first().single{it.id !in before};val snapshot=repo.snapshot(created.id)
             assertEquals(1,snapshot.regions.size);assertTrue(File(snapshot.captures.single().originalPath).length()>0)
             assertTrue(snapshot.captures.single().width>0 && snapshot.captures.single().height>0)

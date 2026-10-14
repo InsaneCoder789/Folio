@@ -245,7 +245,7 @@ No global MCP settings were changed. The supplied API key was not copied into ap
 
 ### Review status
 
-A connected design baseline is available for user review. Browser interaction checks passed; this is not user approval of the design and does not establish native Android or OCR/PDF correctness. See [Testing.md](Testing.md) for evidence and limitations.
+The user-approved browser wireframe and prototype are the visual authority. Native implementation acceptance remains separate. See [Testing.md](Testing.md) for current device evidence and limitations.
 
 
 ### Website retention and launcher
@@ -258,3 +258,29 @@ Review screenshots are saved in `output/design/`: `overview.png`, `wireframe.png
 ## Native integration increment
 
 `android/` now authors the 15 functional routes, shared error/confirm states, brief logo reveal and two skippable onboarding steps. Native controls are connected to private import, CameraX, correction, OCR, review, pairing, layout and actual PDF adapters. This is an initial native implementation of the permanent browser reference; screen-by-screen visual/device parity has not yet been accepted. Searchable generation explains the restriction on rewritten paragraphs; PDF preview labels previous exports when newer edits exist. The website is retained unchanged by this native increment.
+
+
+## Native reference alignment - 14 October 2026
+
+Authority: the user-approved `design/prototype/` and existing screen frames. The original native list of full-width Material buttons did not satisfy that design and is being replaced.
+
+| Prototype element | Native owner |
+| --- | --- |
+| Plus Jakarta Sans, colors, opposing depth, icons, controls | `feature/ui/Silk.kt` |
+| S01-S15 plus boot/onboarding composition | `feature/ui/FolioScreens.kt` |
+| Camera viewport, shutter, capture count, tray and Done | `feature/ui/CaptureUi.kt` |
+| Screen inputs and typed UI actions | `feature/ui/ScannerUi.kt` |
+| Existing Kotlin/Android action adapters | `MainActivity.kt` |
+| Fictional review fixtures, debug build only | `src/debug/.../UiGalleryActivity.kt` |
+
+Preserve compact two-line toolbars, 24 dp gutters, preview-led editors, thumbnail regions, four filter choices, inset fields/segments and fixed bottom primary actions. Use real Android status/navigation bars and platform picker/share dialogs. Native product copy replaces browser-only simulation notices; no sample documents enter the real library.
+
+The debug review activity renders the same production components with fictional paper/card fixtures. Launch after installing the debug APK: `adb shell am start -n com.rohanc.ocrscanner/.feature.ui.UiGalleryActivity --es screen 01`. IDs 01-15 and intro-1/intro-2 are supported. This is visual review, not proof of an OCR/PDF backend operation. The launcher activity remains the actual app with private user data.
+
+Visual acceptance requires native captures of all 17 screens, comparison against the approved browser screens, primary-action/navigation checks and a large-text pass. Source implementation or successful compilation alone does not prove a match. Record actual outcomes in Testing.md before claiming parity.
+
+Remaining backend connections are reviewed per page after UI acceptance. Existing camera/import/correction/OCR/PDF adapters are retained and regression-tested, rather than being replaced by gallery fixtures.
+
+### Pixel 9 native review - 15 October 2026
+
+All 15 routes and both onboarding steps now use the shared native Silk components. [Native screen board](../output/android/ui-parity-pixel9/screen-board.png). Captures cover normal text, 200% text and a 320 dp content width at 200% text on the existing Pixel 9 Pro. These are fictional review fixtures rendered through production UI components. Native UI acceptance remains with the user before further backend work.

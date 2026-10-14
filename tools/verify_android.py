@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Finite Android verification; no emulator launch and no Markdown generation."""
 from pathlib import Path
+import argparse
 import hashlib
 import json
 import os
@@ -9,17 +10,18 @@ import sys
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 
+parser=argparse.ArgumentParser()
+parser.add_argument('--abi',choices=['arm64-v8a','armeabi-v7a','x86','x86_64'],help='Build only the selected test device ABI')
+args=parser.parse_args()
 root = Path(__file__).resolve().parents[1]
 project = root / 'android'
 output = root / 'output' / 'android'
 output.mkdir(parents=True, exist_ok=True)
-env = os.environ.copy()
-studio_jdk = Path('/Applications/Android Studio.app/Contents/jbr/Contents/Home')
-if not env.get('JAVA_HOME') and studio_jdk.is_dir():
-    env['JAVA_HOME'] = str(studio_jdk)
+from android_toolchain import build_environment
+env = build_environment()
 tasks = [':app:assembleDebug', ':app:testDebugUnitTest', ':app:lintDebug', ':app:assembleDebugAndroidTest']
 wrapper = 'gradlew.bat' if os.name == 'nt' else './gradlew'
-command = [wrapper, '--no-daemon', '--console=plain', *tasks]
+command = [wrapper, '--no-daemon', '--console=plain', *(['-PfolioAbis='+args.abi] if args.abi else []), *tasks]
 print('Android verification: debug APK, JVM tests, lint, device-test APK compilation.', flush=True)
 log = output / 'build.log'
 with log.open('w') as stream:
@@ -36,6 +38,9 @@ apk = project / 'app/build/outputs/apk/debug/app-debug.apk'
 result = {
     'timestamp': datetime.now(timezone.utc).isoformat(),
     'sourceRevision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(),
+    'javaHome': env['JAVA_HOME'],
+    'abi': args.abi or 'universal',
+    'sourceDirty': bool(subprocess.check_output(['git', 'status', '--porcelain', '--', 'android', 'tools'], cwd=root, text=True).strip()),
     'command': command, 'exitCode': process.returncode,
     'status': 'passed' if process.returncode == 0 else 'failed',
     'unitTests': unit,

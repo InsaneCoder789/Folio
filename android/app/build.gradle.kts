@@ -14,6 +14,12 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Optional device-specific local APKs; default builds retain all supported ABIs.
+        providers.gradleProperty("folioAbis").orNull?.let { value ->
+            val selected = value.split(',').map { it.trim() }
+            require(selected.isNotEmpty() && selected.all { it in setOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64") })
+            ndk { abiFilters += selected }
+        }
     }
     buildFeatures { compose = true }
     sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")

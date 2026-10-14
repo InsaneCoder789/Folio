@@ -24,6 +24,8 @@ class ScannerViewModel(application:Application,private val saved:SavedStateHandl
         .stateIn(viewModelScope,SharingStarted.Eagerly,null)
     val route=saved.getStateFlow("route","boot")
     val activeId=saved.getStateFlow<String?>("region",null)
+    val editorCaller=saved.getStateFlow<String?>("editorCaller",null)
+    val workflow=saved.getStateFlow("workflow","paired")
     val mode=saved.getStateFlow("mode","DOCUMENT")
     private val working=MutableStateFlow(false)
     val worker=selected.flatMapLatest { id -> if(id==null) flowOf(null) else manager.getWorkInfosForUniqueWorkFlow("ocr:$id").map{it.firstOrNull { info -> !info.state.isFinished } ?: it.lastOrNull()} }
@@ -34,17 +36,25 @@ class ScannerViewModel(application:Application,private val saved:SavedStateHandl
     private val _detected=MutableStateFlow<List<Quad>>(emptyList());val detected=_detected.asStateFlow()
     private val _labPath=MutableStateFlow<String?>(null);val labPath=_labPath.asStateFlow()
     private var actionJob:Job?=null
-    var editorReturn="08"
+    var editorReturn:String
+        get()=saved["editorReturn"]?:"08"
+        set(value){saved["editorReturn"]=value}
     init { viewModelScope.launch { worker.collect { info -> if(info?.state==WorkInfo.State.FAILED) _message.value=info.outputData.getString("error")?:"Text recognition failed. Retry Read all pages." } } }
     // Prefer active work; KEEP prevents overlapping recognition batches.
     fun clearMessage(){_message.value=null}
-    fun go(value:String){saved["route"]=value}
-    fun back(){when(route.value){"01"->Unit;"02","12","13","14"->go("01");"03"->{if(saved.get<Boolean>("retake")==true){saved["retake"]=false;go("05")}else go("02")};"04","05","06","07","09"->go(editorReturn);"10"->go("09");"11"->go("12");"15"->go("05");else->go("01")}}
-    fun newScan(){saved["retake"]=false;saved["document"]=null;saved["region"]=null;saved["mode"]="DOCUMENT";go("02")}
+    fun go(value:String){
+        if(value=="11" && route.value!="11")saved["previewReturn"]=if(route.value=="12")"12" else "10"
+        if(value=="12" && route.value in listOf("01","13"))saved["detailsReturn"]=route.value
+        if(value=="02" && route.value!="03")saved["setupReturn"]=if(route.value in listOf("08","07"))route.value else "01"
+        saved["route"]=value
+    }
+    fun back(){when(route.value){"01"->Unit;"02"->go(saved["setupReturn"]?:"01");"12"->go(saved["detailsReturn"]?:"01");"13","14"->go("01");"03"->{if(saved.get<Boolean>("retake")==true){saved["retake"]=false;go("05")}else go("02")};"04","05","06","07","09"->go(editorReturn);"10"->go("09");"11"->go(saved["previewReturn"]?:"10");"15"->go("05");else->go("01")}}
+    fun newScan(){saved["workflow"]="paired";saved["editorCaller"]=null;saved["retake"]=false;saved["document"]=null;saved["region"]=null;saved["mode"]="DOCUMENT";go("02")}
+    fun chooseWorkflow(value:String){require(value in listOf("paired","multiple"));saved["workflow"]=value}
     fun chooseMode(value:String){if(document.value?.regions.isNullOrEmpty()) saved["mode"]=value}
     fun open(id:String){saved["document"]=id;saved["region"]=null;go("12")}
     fun selectRegion(id:String){saved["region"]=id;_detected.value=emptyList()}
-    fun editRegion(id:String,target:String){selectRegion(id);editorReturn="08";go(target)}
+    fun editRegion(id:String,target:String){saved["editorCaller"]="08";selectRegion(id);editorReturn="08";go(target)}
     private suspend fun ensureDocument():DocumentSnapshot {
         val id=selected.value
         if(id!=null) return repository.snapshot(id)
@@ -52,7 +62,7 @@ class ScannerViewModel(application:Application,private val saved:SavedStateHandl
         saved["document"]=created.document.id
         return created
     }
-    fun importImages(uris:List<Uri>,temporary:java.io.File?=null)=work {
+    fun importImages(uris:List<Uri>,temporary:java.io.File?=null,temporaries:List<java.io.File> = emptyList(),destination:String="04")=work {
         try {
         require(uris.size<=12){"Import at most twelve photos at once."}
         var current=ensureDocument()
@@ -65,9 +75,28 @@ class ScannerViewModel(application:Application,private val saved:SavedStateHandl
         repository.importImages(current.document.id,current.document.revision,uris,if(defaults.value.quality=="High")3000 else 2000)
         current=repository.snapshot(current.document.id)
         current.regions.firstOrNull{it.id !in priorIds}?.let{selectRegion(it.id)}
-        editorReturn="08";go("04")
-        } finally { temporary?.delete() }
+        saved["editorCaller"]=null;editorReturn="08";go(destination)
+        } finally { temporary?.delete();temporaries.forEach{it.delete()} }
     }
+    fun namedNavigation(title:String,target:String,regionId:String?=null)=edit { s ->
+        if(title.trim()!=s.document.title)repository.rename(s.document.id,s.document.revision,title)
+        if(regionId!=null)editRegion(regionId,target) else {saved["editorCaller"]=null;go(target)}
+    }
+    fun enhanceAndRead(recipe:EditRecipe)=edit { s ->
+        repository.correct(s.document.id,s.document.revision,active(s).id,recipe)
+        saved["editorCaller"]=null;recognizeAll()
+    }
+    fun reviewAndContinue(text:String,next:String)=edit { s ->
+        val r=active(s)
+        if(text!=(r.reviewedText?:r.recognizedText.orEmpty()))repository.saveReview(s.document.id,s.document.revision,r.id,text)
+        saved["editorCaller"]=null;go(next)
+    }
+    fun createPdf(title:String,output:String)=edit { s ->
+        if(title.trim()!=s.document.title)repository.rename(s.document.id,s.document.revision,title)
+        val latest=repository.snapshot(s.document.id)
+        repository.export(latest.document.id,latest.document.revision,output);go("11")
+    }
+    fun saveDefaultsAndReturn(value:ScannerDefaults)=work {withContext(Dispatchers.IO){preferences.save(value)};go("01")}
     fun retake(){saved["retake"]=true;go("03")}
     fun rename(title:String)=edit{repository.rename(it.document.id,it.document.revision,title)}
     fun correct(recipe:EditRecipe,next:String)=edit { s -> repository.correct(s.document.id,s.document.revision,active(s).id,recipe);go(next) }

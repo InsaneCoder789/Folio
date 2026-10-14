@@ -7,14 +7,14 @@
       "pages": 1,
       "passed": true,
       "text": "FOLIO BACKEND A working document.",
-      "sha256": "6a9ee3877fe0e4e0ca7fdc8947a8921e3ecdad7d8a5e0e86d1a211a47f82d056"
+      "sha256": "eb0e2b67a0c159ba4df4c337f9ccabaf849d2986ca36f5e5f821767d38f5ceb8"
     },
     {
       "file": "output/android/acceptance/regenerated.pdf",
       "pages": 1,
       "passed": true,
       "text": "Folio reviewed text. Ready for export.",
-      "sha256": "05e3b9851c9059dccf833b617a0c2ad5c3deed6db312b48e73955487be489b34"
+      "sha256": "cbb267c19fc165d6e111cba30d40f4d96c0f2abc076e012ddcdafed451f27eec"
     }
   ],
   "passed": true

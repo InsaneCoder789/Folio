@@ -164,3 +164,38 @@ Evidence: [build/JVM report](../output/android/verification.json), [device repor
 The previous five failing device checks are resolved for the supported API-34 gate: PDF file sync uses an open descriptor, the migration fixture handles tables without indexes, and Espresso runs on a supported stable Android system image. This does not establish API-37 UI-test compatibility.
 
 Scope still unverified: physical camera/photo quality, real ID-card classification accuracy, manual external save/share interaction, all native accessibility/large-text paths, broader API/device coverage, and search/copy in Acrobat or other external viewers. Current evidence proves the tested native MVP workflows, not release readiness or zero possible bugs.
+
+
+## Completion-goal pass - 14 October 2026
+
+Flow: editor with pending changes -> activity recreation -> same changes remain available -> apply/save -> persisted values match.
+
+- Debug build/lint and 23 JVM tests passed after the recovery changes.
+- Expanded API-34 gate: **30 passed**, zero failures/errors/skips. Added pending enhancement restoration, pending reviewed-text restoration and saved editor-return coverage.
+- Independent PDF extraction/rendering passed again for both actual native exports.
+- Route-keyed composition gives each screen its own scroll state. Crop corners and enhancement settings now use saveable state; the crop gesture itself still needs a dedicated recreation interaction check.
+- Six-file documentation rule and permanent design website availability passed.
+- A visible Folio_API34 emulator displayed Folio onboarding; the native gate can now retain its successful emulator using `--visible --keep-open`.
+
+Activity recreation is not process death. The separate `tools/verify_android_recovery.py --serial emulator-5556` probe backgrounds Folio and kills only its debuggable process under its own UID, retaining the Android task. It must observe the old process stop, a new PID and the restored setup route/card mode before passing. This bounded setup probe does not prove persisted-document, OCR-job or export process recovery.
+
+Optimized build verification is separate from the debug gate. `release-verification.json` records the actual candidate result, measured APK size/ABI, test totals and signing boundary. A failed or interrupted optimized gate does not inherit a debug pass. Physical-device, all-route large-text/accessibility, external save/share, disk-full/large-batch and broader API checks remain open.
+
+
+## Pixel 9 visible testing - 15 October 2026
+
+The user requires the existing Pixel_9_Pro emulator as the only tester. The agent-owned background API-34 run was stopped and its emulator closed. Pixel_9_Pro was retained. Current visible-device evidence belongs in `output/android/visible-device-verification.json`; API-34 results do not prove API-37 compatibility.
+
+Use `tools/verify_android_visible.py --serial emulator-5554`. It never starts/stops an emulator, resizes the display, wipes data or uninstalls the app. Direct instrumentation keeps the run visible and avoids Gradle's target-uninstall teardown. The native review activity is debug-only and uses fictional fixtures; production library data remains separate.
+
+### Current Pixel 9 result
+
+- Existing Pixel_9_Pro, emulator-5554, API 37, unchanged display: **34 device tests passed**, zero failures/errors.
+- Debug build, **23 JVM tests** and lint passed; lint passing does not mean warning-free.
+- Four UI test groups cover 15 screens plus two onboarding steps, document/card navigation, 200% text and an actual 320 dp content width at 200% text.
+- [Device report](../output/android/visible-device-verification.json), [build report](../output/android/verification.json), [native screen board](../output/android/ui-parity-pixel9/screen-board.png).
+- The same emulator remains open in the debug UI review activity. No other emulator is used. The arm64-only local debug build fits its available storage.
+
+This verifies the tested flows, not every possible state or backend completeness. Physical-camera quality, representative OCR accuracy, external save/share interaction, additional device coverage and final user acceptance remain separate. Backend completion follows page by page after this UI review.
+
+The same Pixel run produced searchable and regenerated PDFs; independent pypdf extraction and PDFium rendering passed for both synthetic exports. See [PDF report](../output/android/desktop-pdf-verification.json).
