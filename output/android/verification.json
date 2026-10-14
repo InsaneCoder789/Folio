@@ -1,5 +1,6 @@
 {
-  "timestamp": "2026-10-14T15:05:50.146164+00:00",
+  "timestamp": "2026-10-14T16:23:08.817173+00:00",
+  "sourceRevision": "a2b150d7574d16f98a1eb53c6074e6e176091b4e",
   "command": [
     "./gradlew",
     "--no-daemon",
@@ -12,7 +13,7 @@
   "exitCode": 0,
   "status": "passed",
   "unitTests": {
-    "tests": 13,
+    "tests": 23,
     "failures": 0,
     "errors": 0,
     "skipped": 0
@@ -21,5 +22,5 @@
   "instrumentationNote": "Device tests are compiled only. Connect an emulator/phone to execute them.",
   "buildLog": "output/android/build.log",
   "apk": "android/app/build/outputs/apk/debug/app-debug.apk",
-  "apkSha256": "131dd895f3ce331cc4220c3009a6321eb7afff115c60d743e2476a70890d84ae"
+  "apkSha256": "035cc403841d806babba4fca304fead9486e63264908e85cd174c07ddbcddb2f"
 }

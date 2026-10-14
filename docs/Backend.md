@@ -1,6 +1,6 @@
 # Backend - native Kotlin implementation
 
-Status: Kotlin implementation started on 14 October 2026 with user authorization. `android/` contains the first native integration slice; the first APK/JVM/lint build passed; device acceptance remains a separate gate.
+Status: the Kotlin backend MVP runs on Android 14. Build/lint, 23 JVM tests and 27 device checks passed, including camera capture, correction, OCR, paired/multi-card layout and both real PDF exports. Physical-device and broader compatibility validation remain.
 
 This is the existing implementation plan, renamed from Implementation.md at the user’s request. It owns the Kotlin backend, milestones, package responsibilities, data contracts, dependencies, technical decisions, and progress. System design lives in [Architecture.md](Architecture.md), screen behavior in [Frontend.md](Frontend.md), lessons in [Fundamentals.md](Fundamentals.md), and verification in [Testing.md](Testing.md).
 
@@ -302,3 +302,10 @@ Primary implementation references: [OpenCV Android distribution](https://opencv.
 - A dedicated API-34 emulator uses an already installed system image for native UI testing. API-37 preview remains outside the current UI-test compatibility claim.
 
 Searchable text writes explicit word separators so readers can search/copy phrases without guessing spaces from positions. The independent `tools/verify_exported_pdfs.py` check uses pypdf/PDFium on synthetic outputs produced through the actual native UI.
+
+
+### Working backend checkpoint
+
+The native flow is now executed and verified on API 34, not just authored. `Testing.md` records the 23 JVM / 27 device results and independent exported-PDF checks. The generated debug APK is `android/app/build/outputs/apk/debug/app-debug.apk`.
+
+For the local device gate, use `python3 tools/verify_android_device.py --avd Folio_API34` with the installed API-34 AVD. The optional desktop export check is `python3 tools/verify_exported_pdfs.py`, in an environment containing pypdf and pypdfium2. Local verification used the bundled Python runtime. The isolated emulator run ends after recording its results; no website files are affected.

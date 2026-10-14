@@ -141,3 +141,26 @@ Expanded sources author 23 JVM and 20 device tests. New checks cover convex/in-b
 The first foreground API-34 gate passed the build, 23 JVM checks and all 25 device checks, including real CameraX capture, correction, WorkManager OCR, native searchable/regenerated PDF screens and cold activity launch. PDF save descriptor ownership and the migration fixture's optional index list were corrected. Atomic batch-import and retake regression checks also passed.
 
 Independent pypdf reading then exposed missing logical word spaces in searchable output. The exporter now emits explicit separators; a regression check and independent exported-PDF verifier were added. A combined six-card/three-pair/two-sheet integration check is included in the expanded 27-device-test gate. This expanded gate is pending until its actual result is recorded below.
+
+
+### Verified result - backend execution pass
+
+| Check | Actual result |
+| --- | --- |
+| Debug APK build and Android lint | Passed; lint warnings remain, no errors |
+| JVM tests | 23 passed, zero failures/errors/skips |
+| Android 14 / API 34 device tests | 27 passed, zero failures/errors/skips |
+| Independent cold app launch + process alive | Passed |
+| Native CameraX capture -> private draft | Passed on emulated camera |
+| Native correction -> OCR -> searchable PDF -> text review -> regenerated PDF | Passed through the actual Compose screens |
+| Three multi-card photos -> six regions -> three pairs -> two searchable grid sheets | Passed |
+| Atomic import failure/success, retake, migration and stale revisions | Passed |
+| Independent pypdf phrase extraction from both native exports | Passed, including explicit searchable word spaces |
+| Desktop PDFium rendering | Both exported pages rendered and visually inspected without clipping or missing glyphs |
+| GitHub CI for native-code commit a2b150d | Passed |
+
+Evidence: [build/JVM report](../output/android/verification.json), [device report](../output/android/device-verification.json), [independent PDF report](../output/android/desktop-pdf-verification.json), [native PDF-preview capture](../output/android/acceptance/native-preview.png). The debug APK is generated at `android/app/build/outputs/apk/debug/app-debug.apk` and is intentionally excluded from Git. Test PDFs and screenshots use synthetic content.
+
+The previous five failing device checks are resolved for the supported API-34 gate: PDF file sync uses an open descriptor, the migration fixture handles tables without indexes, and Espresso runs on a supported stable Android system image. This does not establish API-37 UI-test compatibility.
+
+Scope still unverified: physical camera/photo quality, real ID-card classification accuracy, manual external save/share interaction, all native accessibility/large-text paths, broader API/device coverage, and search/copy in Acrobat or other external viewers. Current evidence proves the tested native MVP workflows, not release readiness or zero possible bugs.
