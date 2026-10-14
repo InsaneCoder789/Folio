@@ -1,0 +1,21 @@
+{
+  "engine": "pypdf 6.10.0",
+  "renderer": "PDFium",
+  "results": [
+    {
+      "file": "output/android/acceptance/searchable.pdf",
+      "pages": 1,
+      "passed": true,
+      "text": "FOLIO BACKEND A working document.",
+      "sha256": "6a9ee3877fe0e4e0ca7fdc8947a8921e3ecdad7d8a5e0e86d1a211a47f82d056"
+    },
+    {
+      "file": "output/android/acceptance/regenerated.pdf",
+      "pages": 1,
+      "passed": true,
+      "text": "Folio reviewed text. Ready for export.",
+      "sha256": "05e3b9851c9059dccf833b617a0c2ad5c3deed6db312b48e73955487be489b34"
+    }
+  ],
+  "passed": true
+}

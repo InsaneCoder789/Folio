@@ -76,7 +76,10 @@ try:
     if result.returncode or counts['tests'] < 27 or counts['failures'] or counts['errors'] or counts['skipped']:
         raise RuntimeError('Device tests did not all pass; inspect device-tests.log and Gradle reports.')
     # Synthetic evidence published by the native round-trip test survives test-target teardown.
-    subprocess.run([adb, '-s', serial, 'pull', '/sdcard/Download/FolioVerification', str(output / 'acceptance')], capture_output=True)
+    acceptance = output / 'acceptance'
+    acceptance.mkdir(parents=True, exist_ok=True)
+    for filename in ('searchable.pdf', 'regenerated.pdf', 'native-preview.png'):
+        run([adb, '-s', serial, 'pull', '/sdcard/Download/FolioVerification/' + filename, str(acceptance / filename)], capture_output=True)
     # Connected instrumentation may uninstall its target during teardown.
     # Install the app explicitly before the independent launch gate.
     run([adb, '-s', serial, 'install', '-r', str(root / 'android/app/build/outputs/apk/debug/app-debug.apk')], capture_output=True)

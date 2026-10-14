@@ -1,14 +1,14 @@
 {
-  "timestamp": "2026-10-14T15:05:05.439513+00:00",
-  "avd": "Pixel_9_Pro",
-  "status": "failed",
+  "timestamp": "2026-10-14T16:22:24.878572+00:00",
+  "avd": "Folio_API34",
+  "status": "passed",
   "deviceTests": {
-    "tests": 10,
+    "tests": 27,
     "failures": 0,
     "errors": 0,
     "skipped": 0
   },
-  "activityLaunched": false,
-  "sdkInt": "37",
-  "error": "Command '['/Users/rohanc/Library/Android/sdk/platform-tools/adb', '-s', 'emulator-5556', 'shell', 'am', 'start', '-W', '-n', 'com.rohanc.ocrscanner/.MainActivity']' returned non-zero exit status 1."
+  "activityLaunched": true,
+  "sdkInt": "34",
+  "launchOutput": "Starting: Intent { cmp=com.rohanc.ocrscanner/.MainActivity }\nStatus: ok\nLaunchState: COLD\nActivity: com.rohanc.ocrscanner/.MainActivity\nTotalTime: 2993\nWaitTime: 3011\nComplete\n"
 }
