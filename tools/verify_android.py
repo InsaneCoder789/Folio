@@ -29,12 +29,13 @@ for report in (project / 'app/build/test-results/testDebugUnitTest').glob('TEST-
     node = ET.parse(report).getroot()
     for field in unit:
         unit[field] += int(node.get(field, 0))
-if process.returncode == 0 and (unit['tests'] < 13 or unit['failures'] or unit['errors'] or unit['skipped']):
-    print('Verification failed: expected all 13 JVM tests to execute and pass.', flush=True)
+if process.returncode == 0 and (unit['tests'] < 23 or unit['failures'] or unit['errors'] or unit['skipped']):
+    print('Verification failed: expected all 23 JVM tests to execute and pass.', flush=True)
     process.returncode = 1
 apk = project / 'app/build/outputs/apk/debug/app-debug.apk'
 result = {
     'timestamp': datetime.now(timezone.utc).isoformat(),
+    'sourceRevision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(),
     'command': command, 'exitCode': process.returncode,
     'status': 'passed' if process.returncode == 0 else 'failed',
     'unitTests': unit,
