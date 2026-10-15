@@ -70,7 +70,10 @@ class OpenCvProcessor {
             Utils.bitmapToMat(bitmap,source)
             Imgproc.warpPerspective(source,warped,transform,Size(width.toDouble(),height.toDouble()),Imgproc.INTER_CUBIC)
             when(recipe.rotation) { 1->Core.rotate(warped,rotated,Core.ROTATE_90_CLOCKWISE);2->Core.rotate(warped,rotated,Core.ROTATE_180);3->Core.rotate(warped,rotated,Core.ROTATE_90_COUNTERCLOCKWISE);else->warped.copyTo(rotated) }
-            if(labStage=="Edges") {
+            if(labStage=="Blur") {
+                Imgproc.cvtColor(rotated,output,Imgproc.COLOR_RGBA2GRAY)
+                Imgproc.GaussianBlur(output,output,Size(5.0,5.0),0.0)
+            } else if(labStage=="Edges") {
                 Imgproc.cvtColor(rotated,output,Imgproc.COLOR_RGBA2GRAY);Imgproc.Canny(output,output,60.0,180.0)
             } else if(recipe.enhancement==Enhancement.GRAYSCALE || recipe.enhancement==Enhancement.BLACK_WHITE || labStage=="Grayscale") {
                 Imgproc.cvtColor(rotated,output,Imgproc.COLOR_RGBA2GRAY)

@@ -13,12 +13,17 @@ root=Path(__file__).resolve().parents[1]
 parser=argparse.ArgumentParser()
 parser.add_argument('--serial',required=True)
 parser.add_argument('--test-class',help='Optional instrumentation class; otherwise run the complete native suite')
+parser.add_argument('--launch-app',action='store_true',help='Finish on the real app library rather than the debug review fixture')
+parser.add_argument('--recovery',action='store_true',help='After passing device tests, verify real process-death restoration on the same Pixel')
 args=parser.parse_args()
+if args.recovery:args.launch_app=True
 env=build_environment()
 sdk=Path(env.get('ANDROID_HOME') or env.get('ANDROID_SDK_ROOT') or Path.home()/'Library/Android/sdk')
 adb=str(sdk/'platform-tools/adb')
 output=root/'output/android';output.mkdir(parents=True,exist_ok=True)
 report={'timestamp':datetime.now(timezone.utc).isoformat(),'serial':args.serial,'status':'failed','testClass':args.test_class,'usesExistingEmulator':True,'emulatorStopped':False}
+report['sourceRevision']=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()
+report['sourceDirty']=bool(subprocess.check_output(['git','status','--porcelain','--','android','tools'],cwd=root,text=True).strip())
 
 def command(parts,**kw):return subprocess.run(parts,check=True,text=True,timeout=kw.pop('timeout',60),**kw)
 def shell(*parts):return command([adb,'-s',args.serial,'shell',*parts],capture_output=True).stdout.strip()
@@ -42,14 +47,14 @@ try:
     content=log.read_text();report['log']=str(log.relative_to(root))
     passed=re.search(r'OK \((\d+) tests?\)',content)
     failures=re.search(r'Tests run:\s*(\d+),\s*Failures:\s*(\d+)',content)
-    report['deviceTests']={'tests':int(passed.group(1)) if passed else int(failures.group(1)) if failures else 0,'failures':int(failures.group(2)) if failures else 0,'errors':0 if passed else 1}
+    report['deviceTests']={'tests':int(passed.group(1)) if passed else int(failures.group(1)) if failures else 0,'failures':int(failures.group(2)) if failures else 0,'errors':0 if passed or failures else 1}
     # Collect partial captures too, so a failed test can still be diagnosed visually.
     ui=output/'ui-parity-pixel9';ui.mkdir(exist_ok=True)
     for route in [f'{i:02}' for i in range(1,16)]+['intro-1','intro-2']:
         for suffix in ('','-large','-narrow-large'):
             subprocess.run([adb,'-s',args.serial,'pull',f'/sdcard/Download/FolioUiParity/{route}{suffix}.png',str(ui/f'{route}{suffix}.png')],capture_output=True,timeout=10)
     if result.returncode or not passed:raise RuntimeError('Native instrumentation did not all pass; inspect visible-device-tests.log')
-    expected=4 if args.test_class and args.test_class.endswith('NativeUiParityTest') else 34 if not args.test_class else 1
+    expected=4 if args.test_class and args.test_class.endswith('NativeUiParityTest') else 51 if not args.test_class else 1
     if int(passed.group(1))<expected:raise RuntimeError('Expected native checks were not all executed')
     report['status']='passed'
 except Exception as failure:
@@ -58,8 +63,17 @@ except Exception as failure:
 finally:
     # Leave the same emulator visible in the native review activity. No uninstall or data reset.
     try:
-        launch=command([adb,'-s',args.serial,'shell','am','start','-W','-n','com.rohanc.ocrscanner/.feature.ui.UiGalleryActivity','--es','screen','01'],capture_output=True,timeout=30)
+        activity='com.rohanc.ocrscanner/.MainActivity' if args.launch_app else 'com.rohanc.ocrscanner/.feature.ui.UiGalleryActivity'
+        launch=command([adb,'-s',args.serial,'shell','am','start','-W','-n',activity,*([] if args.launch_app else ['--es','screen','01'])],capture_output=True,timeout=30)
         report['launchOutput']=launch.stdout
     except Exception as failure:report['launchError']=str(failure)
+    if report['status']=='passed' and args.recovery:
+        try:
+            recovery=command([sys.executable,str(root/'tools/verify_android_recovery.py'),'--serial',args.serial],cwd=root,capture_output=True,timeout=120)
+            report['processRecovery']=json.loads(recovery.stdout)
+        except Exception as failure:
+            report['status']='failed';report['error']='Process-death restoration did not pass.'
+            report['recoveryError']=str(failure)
+            if isinstance(failure,subprocess.CalledProcessError):report['recoveryOutput']=str(failure.stdout or '')+str(failure.stderr or '')
     (output/'visible-device-verification.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2),flush=True)
 raise SystemExit(0 if report['status']=='passed' else 1)

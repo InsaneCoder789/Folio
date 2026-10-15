@@ -26,6 +26,11 @@ fun CameraCapture(onCaptured:(File)->Unit,onError:(String)->Unit,onImport:()->Un
     DisposableEffect(Unit){onDispose{alive.set(false)}}
     val context=LocalContext.current;val lifecycle=LocalLifecycleOwner.current
     var allowed by remember { mutableStateOf(ContextCompat.checkSelfPermission(context,Manifest.permission.CAMERA)==PackageManager.PERMISSION_GRANTED) }
+    DisposableEffect(lifecycle){
+        val observer=androidx.lifecycle.LifecycleEventObserver{_,event->if(event==androidx.lifecycle.Lifecycle.Event.ON_RESUME){allowed=ContextCompat.checkSelfPermission(context,Manifest.permission.CAMERA)==PackageManager.PERMISSION_GRANTED}}
+        lifecycle.lifecycle.addObserver(observer)
+        onDispose{lifecycle.lifecycle.removeObserver(observer)}
+    }
     val permission=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()){allowed=it}
     var capture by remember{mutableStateOf<ImageCapture?>(null)};var taking by remember{mutableStateOf(false)}
     if(!allowed) {

@@ -39,7 +39,7 @@ class NativeUiParityTest {
         rule.onNodeWithTag("screen-11").assertIsDisplayed()
         assertTrue(rule.activity.events.any{it is UiAction.EnhanceAndRead})
         assertTrue(rule.activity.events.any{it is UiAction.CreatePdf})
-        rule.runOnUiThread{rule.activity.state=UiGalleryActivity.fixture(rule.activity,"02",true)}
+        rule.runOnUiThread{rule.activity.state=UiGalleryActivity.fixture(rule.activity,"02",true).copy(document=null,mode="CARDS")}
         rule.onNodeWithText("ID cards").assertIsSelected()
         rule.onNodeWithText("Multiple cards").performClick()
         rule.onNodeWithText("Import images").performClick();rule.onNodeWithText("Apply & straighten").performClick();rule.onNodeWithText("Read text").performClick();rule.onNodeWithText("Continue").performClick()

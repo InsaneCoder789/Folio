@@ -6,6 +6,7 @@ import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -18,6 +19,11 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.*
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.rohanc.ocrscanner.core.*
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +45,9 @@ fun ScanImage(path:String,description:String,modifier:Modifier=Modifier,maxSide:
 
 @Composable
 fun CropEditor(path:String,width:Int,height:Int,quad:Quad,onChange:(Quad)->Unit,modifier:Modifier=Modifier) {
-    Box(modifier) {
+    var editorSize by remember{mutableStateOf(IntSize.Zero)}
+    val touchSize=with(LocalDensity.current){48.dp.toPx()}
+    Box(modifier.onSizeChanged{editorSize=it}) {
         ScanImage(path,"Original photo and crop boundaries",Modifier.fillMaxSize())
         var dragged by remember{mutableIntStateOf(-1)}
         val latest by rememberUpdatedState(quad)
@@ -59,6 +67,36 @@ fun CropEditor(path:String,width:Int,height:Int,quad:Quad,onChange:(Quad)->Unit,
             val pathLine=Path().apply{moveTo(points[0].x,points[0].y);points.drop(1).forEach{lineTo(it.x,it.y)};close()}
             drawPath(pathLine,Color(0xFF6267B4),style=Stroke(3.dp.toPx()))
             points.forEach{drawCircle(Color.White,10.dp.toPx(),it);drawCircle(Color(0xFF6267B4),6.dp.toPx(),it)}
+        }
+        // Virtual handles expose the same corners without adding visible controls.
+        // TalkBack actions move in source coordinates and retain the drag bounds.
+        if(editorSize.width>0 && editorSize.height>0){
+            val scale=min(editorSize.width.toFloat()/width,editorSize.height.toFloat()/height)
+            val origin=Offset((editorSize.width-width*scale)/2,(editorSize.height-height*scale)/2)
+            val names=listOf("Top left","Top right","Bottom right","Bottom left")
+            quad.points.forEachIndexed{index,point->
+                fun move(dx:Float,dy:Float):Boolean{
+                    val points=latest.points.toMutableList();val current=points[index]
+                    val next=Point((current.x+dx).coerceIn(0f,width-1f),(current.y+dy).coerceIn(0f,height-1f))
+                    if(next==current)return false
+                    points[index]=next;onChange(Quad(points));return true
+                }
+                val stepX=max(1f,width/100f);val stepY=max(1f,height/100f)
+                val position=Offset(point.x*scale,point.y*scale)+origin
+                Box(Modifier.offset{IntOffset(
+                    (position.x-touchSize/2).roundToInt().coerceIn(0,max(0,editorSize.width-touchSize.roundToInt())),
+                    (position.y-touchSize/2).roundToInt().coerceIn(0,max(0,editorSize.height-touchSize.roundToInt()))
+                )}.size(48.dp).semantics{
+                    contentDescription="${names[index]} crop corner"
+                    stateDescription="Horizontal ${(100*point.x/max(1,width-1)).roundToInt()} percent, vertical ${(100*point.y/max(1,height-1)).roundToInt()} percent"
+                    customActions=listOf(
+                        CustomAccessibilityAction("Move left"){move(-stepX,0f)},
+                        CustomAccessibilityAction("Move right"){move(stepX,0f)},
+                        CustomAccessibilityAction("Move up"){move(0f,-stepY)},
+                        CustomAccessibilityAction("Move down"){move(0f,stepY)}
+                    )
+                }.focusable())
+            }
         }
     }
 }

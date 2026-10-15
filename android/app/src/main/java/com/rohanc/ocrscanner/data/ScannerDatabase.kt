@@ -14,6 +14,7 @@ data class DocumentEntity(
     @ColumnInfo(defaultValue = "'Stacked'") val template: String = "Stacked",
     @ColumnInfo(defaultValue = "'A4'") val paper: String = "A4",
     @ColumnInfo(defaultValue = "36") val margin: Float = 36f,
+    @ColumnInfo(defaultValue = "'multiple'") val workflow: String = "multiple",
 )
 @Entity(tableName = "captures", foreignKeys = [ForeignKey(
     entity = DocumentEntity::class, parentColumns = ["id"], childColumns = ["documentId"], onDelete = ForeignKey.CASCADE
@@ -71,5 +72,5 @@ interface ScannerDao {
     @Update suspend fun updateRegion(region: RegionEntity)
     @Query("DELETE FROM documents WHERE id = :id") suspend fun delete(id: String)
 }
-@Database(entities = [DocumentEntity::class, CaptureEntity::class, RegionEntity::class, ExportEntity::class], version = 2, exportSchema = true, autoMigrations = [AutoMigration(from = 1, to = 2)])
+@Database(entities = [DocumentEntity::class, CaptureEntity::class, RegionEntity::class, ExportEntity::class], version = 3, exportSchema = true, autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)])
 abstract class ScannerDatabase : RoomDatabase() { abstract fun scannerDao(): ScannerDao }

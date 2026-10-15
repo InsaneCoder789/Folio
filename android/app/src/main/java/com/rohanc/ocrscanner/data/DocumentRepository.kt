@@ -26,9 +26,9 @@ class DocumentRepository(
     fun observe(id: String) = dao.observeSnapshot(id)
     fun search(query: String) = dao.search(query)
     suspend fun snapshot(id: String) = dao.snapshot(id) ?: error("Document no longer exists.")
-    suspend fun create(title: String = "Untitled scan", mode: String = "DOCUMENT", paper: String = "A4"): DocumentSnapshot {
-        require(mode in listOf("DOCUMENT","CARDS") && paper in listOf("A4","Letter"))
-        val document = DocumentEntity(UUID.randomUUID().toString(), cleanTitle(title), updatedAt = System.currentTimeMillis(),mode = mode,paper = paper)
+    suspend fun create(title: String = "Untitled scan", mode: String = "DOCUMENT", paper: String = "A4", workflow: String = "multiple"): DocumentSnapshot {
+        require(mode in listOf("DOCUMENT","CARDS") && paper in listOf("A4","Letter") && workflow in listOf("paired","multiple"))
+        val document = DocumentEntity(UUID.randomUUID().toString(), cleanTitle(title), updatedAt = System.currentTimeMillis(),mode = mode,paper = paper,workflow = workflow)
         dao.insertDocument(document)
         return snapshot(document.id)
     }
@@ -59,7 +59,11 @@ class DocumentRepository(
                 RevisionRules.requireCurrent(expectedRevision, current.document.revision)
                 staged.forEachIndexed { index, capture ->
                     dao.insertCapture(capture)
-                    dao.insertRegion(RegionEntity(UUID.randomUUID().toString(), capture.id, id, current.regions.size + index))
+                    val position=current.regions.size+index
+                    val paired=current.document.mode=="CARDS" && current.document.workflow=="paired"
+                    dao.insertRegion(RegionEntity(UUID.randomUUID().toString(), capture.id, id, position,
+                        side=if(paired)if(position%2==0)"FRONT" else "BACK" else "SINGLE",
+                        pairLabel=if(paired)"Card ${position/2+1}" else ""))
                 }
                 touch(current.document)
             }
@@ -150,6 +154,10 @@ class DocumentRepository(
         val current=activeSnapshot(id);val region=current.regions.single{it.id==regionId};val capture=current.captures.single{it.id==region.captureId}
         return vision.detect(capture.uprightPath,current.document.mode=="CARDS")
     }
+    suspend fun preview(id:String,regionId:String,recipe:EditRecipe):ProcessedImage {
+        val s=activeSnapshot(id);val r=s.regions.single{it.id==regionId};val c=s.captures.single{it.id==r.captureId}
+        return vision.process(c.uprightPath,recipe,images.previewDirectory(id))
+    }
     suspend fun splitCapture(id:String, expectedRevision:Long, regionId:String, quads:List<Quad>) {
         require(quads.isNotEmpty() && quads.size<=12) { "Choose between one and twelve regions." }
         val current=activeSnapshot(id);RevisionRules.requireCurrent(expectedRevision,current.document.revision)
@@ -175,6 +183,21 @@ class DocumentRepository(
         val now=activeSnapshot(id);RevisionRules.requireCurrent(expectedRevision,now.document.revision)
         require(now.document.mode=="CARDS")
         dao.updateRegion(now.regions.single{it.id==regionId}.copy(side=side,pairLabel=label.trim()));touch(now.document)
+    }
+    /** Validate the whole proposed pairing before publishing any label changes. */
+    suspend fun confirmCardLabels(id:String, expectedRevision:Long, edits:List<CardLabelEdit>) = database.withTransaction {
+        val now=activeSnapshot(id);RevisionRules.requireCurrent(expectedRevision,now.document.revision)
+        require(now.document.mode=="CARDS")
+        RevisionRules.reordered(edits.map{it.id},now.regions.map{it.id})
+        val byId=edits.associateBy{it.id}
+        val proposed=now.regions.map{region->
+            val edit=byId.getValue(region.id)
+            require(edit.side in CardSide.entries.map{it.name} && edit.label.length<=80){"Use a supported side and a pair label of at most 80 characters."}
+            region.copy(side=edit.side,pairLabel=if(edit.side=="SINGLE")"" else edit.label.trim())
+        }
+        layoutSheets(now.copy(regions=proposed))
+        proposed.forEach{dao.updateRegion(it)}
+        touch(now.document)
     }
     suspend fun layout(id:String, expectedRevision:Long, template:String, paper:String, margin:Float) = database.withTransaction {
         require(template in listOf("Stacked","Side by side","Grid") && paper in listOf("A4","Letter") && margin in 18f..60f)
@@ -205,15 +228,21 @@ class DocumentRepository(
         try {
             coroutineContext.ensureActive()
             database.withTransaction {
-                RevisionRules.requireCurrent(expectedRevision,activeSnapshot(id).document.revision)
+                val current=activeSnapshot(id)
+                RevisionRules.requireCurrent(expectedRevision,current.document.revision)
                 dao.insertExport(result)
+                // Library summaries observe documents; publishing an export must
+                // invalidate that flow without making the new PDF itself stale.
+                dao.updateDocument(current.document.copy(updatedAt=System.currentTimeMillis()))
             };committed=true;return result
         } finally { if(!committed) removeUnpublishedFiles(listOf(result.path)) }
     }
     suspend fun lab(id:String,regionId:String,stage:String):ProcessedImage {
-        require(stage in listOf("Grayscale","Edges","Threshold"))
+        require(stage in listOf("Grayscale","Blur","Edges","Threshold","Warp"))
         val now=activeSnapshot(id);val r=now.regions.single{it.id==regionId};val c=now.captures.single{it.id==r.captureId}
-        return vision.process(c.uprightPath,recipe(r,c).copy(enhancement=if(stage=="Threshold") Enhancement.BLACK_WHITE else Enhancement.GRAYSCALE),images.documentDirectory(id),if(stage=="Threshold") null else stage)
+        val edit=if(stage=="Warp")recipe(r,c).copy(enhancement=Enhancement.ORIGINAL) else
+            EditRecipe(Quad.full(c.width,c.height),enhancement=if(stage=="Threshold") Enhancement.BLACK_WHITE else Enhancement.GRAYSCALE)
+        return vision.process(c.uprightPath,edit,images.previewDirectory(id),if(stage in listOf("Threshold","Warp"))null else stage)
     }
     suspend fun delete(id: String, expectedRevision: Long) {
         database.withTransaction {

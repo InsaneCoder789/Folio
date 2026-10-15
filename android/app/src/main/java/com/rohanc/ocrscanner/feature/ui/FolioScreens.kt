@@ -30,7 +30,6 @@ import java.util.Locale
 /** All screen composition comes from the approved design/prototype; actions contain no engine work. */
 @Composable fun FolioScreens(ui:ScannerUi,onAction:(UiAction)->Unit,camera:@Composable ()->Unit={}){
     val send=onAction
-    val back={send(UiAction.Back)}
     val doc=ui.document
     val region=ui.region
     val subtitle=when(ui.route){
@@ -61,21 +60,38 @@ import java.util.Locale
     var contrast by rememberSaveable(region?.id,region?.imageRevision){mutableFloatStateOf(recipeBase.contrast)}
     var review by rememberSaveable(region?.id,region?.textRevision){mutableStateOf(region?.reviewedText?:region?.recognizedText.orEmpty())}
     var name by rememberSaveable(doc?.document?.id,ui.route){mutableStateOf(doc?.document?.title.orEmpty())}
+    val back={send(if(ui.route in listOf("08","10") && doc!=null && !ui.busy)UiAction.NamedBack(name) else UiAction.Back)}
+    androidx.activity.compose.BackHandler(ui.route in listOf("08","10") && doc!=null && !ui.busy){back()}
     // The first Room emission can arrive after the restored route.
     LaunchedEffect(doc?.document?.id){if(name.isBlank())name=doc?.document?.title.orEmpty()}
     var paperChoice by rememberSaveable(doc?.document?.id){mutableStateOf(doc?.document?.paper?:"A4")}
     var output by rememberSaveable(doc?.document?.id){mutableStateOf("SEARCHABLE")}
     var previewPage by rememberSaveable(ui.export?.id){mutableIntStateOf(0)}
-    var settings by remember(ui.defaults){mutableStateOf(ui.defaults)}
+    var settings by rememberSaveable(ui.defaults,stateSaver=listSaver<ScannerDefaults,Any>(
+        save={listOf(it.paper,it.quality,it.learningLab,it.introDone)},
+        restore={ScannerDefaults(it[0] as String,it[1] as String,it[2] as Boolean,it[3] as Boolean)}
+    )){mutableStateOf(ui.defaults)}
     val reviewFocus=remember{FocusRequester()}
     var tab by rememberSaveable{mutableStateOf("Image + text")}
     var stage by rememberSaveable{mutableStateOf("Original")}
     var remove by remember{mutableStateOf<String?>(null)}
     var deleting by remember{mutableStateOf(false)}
     var replaceRegions by remember{mutableStateOf(false)}
+    // Pending pair edits belong to the screen, including cards currently off screen.
+    var cardDraftJson by rememberSaveable(doc?.document?.id){mutableStateOf("{}")}
+    val cardDrafts=org.json.JSONObject(cardDraftJson)
+    fun cardEdit(r:RegionEntity):CardLabelEdit{
+        val draft=cardDrafts.optJSONObject(r.id)
+        return CardLabelEdit(r.id,draft?.optString("side")?:r.side,draft?.optString("label")?:r.pairLabel)
+    }
+    var layoutPage by rememberSaveable(doc?.document?.id){mutableIntStateOf(0)}
     val recipe=recipeBase.copy(rotation=rotation,enhancement=Enhancement.valueOf(filter),brightness=brightness,contrast=contrast)
+    if(ui.route=="05" && region!=null){
+        LaunchedEffect(region.id,recipe){if(recipe!=recipeBase || region.correctedPath==null)send(UiAction.Preview(recipe)) else send(UiAction.ClearPreview)}
+        DisposableEffect(region.id){onDispose{send(UiAction.ClearPreview)}}
+    }
     val valid=doc!=null && doc.regions.isNotEmpty()
-    val ocrReady=valid && doc!!.regions.all{it.ocrRevision==it.imageRevision && !it.recognizedText.isNullOrBlank()}
+    val ocrReady=valid && doc!!.regions.all{it.ocrRevision==it.imageRevision && it.recognizedText!=null}
     val sheets=remember(doc){runCatching{doc?.let{layoutSheets(it)}}}
     val footer:(@Composable ColumnScope.()->Unit)?=when(ui.route){
         "01"->{ {SilkButton("New scan","plus",enabled=!ui.busy){send(UiAction.NewScan)}} }
@@ -85,10 +101,10 @@ import java.util.Locale
             if(ui.editorReturn!=null)send(UiAction.Correct(recipe,ui.editorReturn)) else send(UiAction.EnhanceAndRead(recipe))
         }} }
         "06"->{ {SilkButton(if(ui.editorReturn!=null)"Save text" else "Continue","check",enabled=!ui.busy && region?.ocrRevision==region?.imageRevision && valid){send(UiAction.ReviewAndContinue(review,ui.editorReturn?:if(ui.isCards)"07" else "08"))}} }
-        "07"->{ {SilkButton("Confirm cards","check",enabled=!ui.busy && valid){send(UiAction.ConfirmCards)}} }
+        "07"->{ {SilkButton("Confirm cards","check",enabled=!ui.busy && valid){send(UiAction.ConfirmCardLabels(doc!!.regions.map(::cardEdit)))}} }
         "08"->{ {SilkButton("Arrange pages","layout",enabled=!ui.busy && valid){send(UiAction.NamedNavigation(name,"09"))}} }
         "09"->{ {SilkButton("Export options",enabled=!ui.busy && valid && sheets.isSuccess){send(UiAction.Go("10"))}} }
-        "10"->{ {SilkButton(if(ocrReady)"Generate preview" else "Read text first",if(ocrReady)"document" else "text",enabled=!ui.busy && valid){if(ocrReady)send(UiAction.CreatePdf(name,output)) else send(UiAction.ReadAll)}} }
+        "10"->{ {SilkButton(if(ocrReady)"Generate preview" else "Read text first",if(ocrReady)"document" else "text",enabled=!ui.busy && valid){if(ocrReady)send(UiAction.CreatePdf(name,output)) else send(UiAction.ReadForExport(name))}} }
         "11"->{ {SilkButton("Save to library","check",enabled=!ui.busy && ui.export!=null){send(UiAction.Go("12"))}} }
         "12"->{ {SilkButton(if(ui.export!=null)"Open PDF preview" else "Continue editing",if(ui.export!=null)"document" else "crop",enabled=!ui.busy){send(UiAction.Go(if(ui.export!=null)"11" else "08"))}} }
         "14"->{ {SilkButton("Save defaults","check",enabled=!ui.busy){send(UiAction.SaveDefaults(settings))}} }
@@ -114,7 +130,7 @@ import java.util.Locale
                 Spacer(Modifier.height(4.dp))
                 SilkChoice("Document","Single pages or a whole stack.","document",!ui.isCards,!ui.busy && doc?.regions.isNullOrEmpty()){send(UiAction.Mode("DOCUMENT"))}
                 SilkChoice("ID cards","Keep cards together on one page.","cards",ui.isCards,!ui.busy && doc?.regions.isNullOrEmpty()){send(UiAction.Mode("CARDS"))}
-                if(ui.isCards){Text("Card workflow",style=MaterialTheme.typography.labelMedium);SilkSegments(listOf("paired","multiple"),ui.workflow,label={if(it=="paired")"Front & back" else "Multiple cards"}){send(UiAction.Workflow(it))};SilkCaption(if(ui.workflow=="paired")"Capture the front and back. Confirm the pair yourself." else "Photograph separated cards. Review each region individually.")}
+                if(ui.isCards){Text("Card workflow",style=MaterialTheme.typography.labelMedium);SilkSegments(listOf("paired","multiple"),ui.workflow,!ui.busy && doc==null,label={if(it=="paired")"Front & back" else "Multiple cards"}){send(UiAction.Workflow(it))};SilkCaption(if(ui.workflow=="paired")"Capture the front and back. Confirm the pair yourself." else "Photograph separated cards. Review each region individually.")}
                 Row(Modifier.padding(top=20.dp),horizontalArrangement=Arrangement.spacedBy(12.dp),verticalAlignment=Alignment.CenterVertically){SilkIcon("scan");SilkCaption("Capture first. Fine-tune the details next.")}
             }
             "03"->camera()
@@ -134,7 +150,7 @@ import java.util.Locale
             }
             "05"->{
                 if(!valid){AddPage(send);return@SilkScreen}
-                ImageWell(if(filter=="ORIGINAL")ui.capture?.uprightPath else ui.image,302.dp,rotation=(rotation-recipeBase.rotation)*90f,colorFilter=previewFilter(filter,brightness,contrast))
+                ImageWell(ui.previewPath?:ui.image,302.dp)
                 Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp)){
                     listOf("ORIGINAL" to "Original","COLOR" to "Color","GRAYSCALE" to "Grayscale","BLACK_WHITE" to "B&W").forEach{(value,label)->
                         Column(Modifier.weight(1f).clickable(enabled=!ui.busy,role=Role.RadioButton){filter=value}.semantics{selected=filter==value}.padding(vertical=3.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(9.dp)){
@@ -159,7 +175,9 @@ import java.util.Locale
                 if((doc?.regions?.size?:0)>1)RegionStrip(ui,send)
             }
             "07"->{
-                doc!!.regions.sortedBy{it.position}.forEach{r->CardPair(r,doc,ui.busy,send)}
+                doc!!.regions.sortedBy{it.position}.forEach{r->CardPair(r,doc,cardEdit(r),ui.busy){edit->
+                    cardDraftJson=org.json.JSONObject(cardDraftJson).put(r.id,org.json.JSONObject().put("side",edit.side).put("label",edit.label)).toString()
+                }}
                 SilkCaption("Unknown card types are allowed. Pairing is always confirmed by you.")
                 SilkButton("Capture missing side","plus",false,!ui.busy){send(UiAction.Go("02"))}
             }
@@ -181,7 +199,14 @@ import java.util.Locale
                 }
                 if(sheets.isSuccess && !sheets.getOrNull().isNullOrEmpty()){
                     Column(Modifier.fillMaxWidth().silkPanel(inset=true,radius=20.dp).padding(20.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(16.dp)){
-                        PageSketch(sheets.getOrThrow()!!.first(),ui,Modifier.fillMaxWidth().height(345.dp))
+                        val pages=sheets.getOrThrow()!!
+                        val index=layoutPage.coerceIn(pages.indices)
+                        PageSketch(pages[index],ui,Modifier.fillMaxWidth().height(345.dp))
+                        if(pages.size>1)Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically){
+                            TextButton(enabled=index>0,onClick={layoutPage=index-1}){Text("Previous sheet")}
+                            Text("${index+1}/${pages.size}",style=MaterialTheme.typography.labelSmall)
+                            TextButton(enabled=index<pages.lastIndex,onClick={layoutPage=index+1}){Text("Next sheet")}
+                        }
                         Text("${sheets.getOrThrow()!!.size} ${if(sheets.getOrThrow()!!.size==1)"sheet" else "sheets"} · ${document.document.paper} · aspect ratio preserved",style=MaterialTheme.typography.labelSmall,color=Silk.muted,textAlign=TextAlign.Center)
                     }
                 }else SilkCaption(sheets.exceptionOrNull()?.message?:"Add a page to arrange your scan.")
@@ -242,9 +267,9 @@ import java.util.Locale
             }
             "15"->{
                 Text("Processing stage",style=MaterialTheme.typography.labelMedium)
-                SilkSelect(listOf("Original","Grayscale","Blur","Edges","Corners","Warp","OCR boxes"),stage,fullWidth=true){stage=it;if(it in listOf("Grayscale","Edges"))send(UiAction.Lab(it))}
+                SilkSelect(listOf("Original","Grayscale","Blur","Edges","Corners","Warp","OCR boxes"),stage,fullWidth=true,enabled=!ui.busy){stage=it;if(it in listOf("Grayscale","Blur","Edges","Warp"))send(UiAction.Lab(it))}
                 Box {
-                    ImageWell(when(stage){"Original","Blur","Corners"->ui.capture?.uprightPath;"Warp","OCR boxes"->ui.image;else->ui.labPath},300.dp,colorFilter=if(stage=="Blur")previewFilter("GRAYSCALE",0f,1f) else null,soften=stage=="Blur")
+                    ImageWell(when(stage){"Original","Corners"->ui.capture?.uprightPath;"OCR boxes"->ui.image;else->ui.labPath},300.dp)
                     if(stage=="Corners" && ui.capture!=null)QuadOverlay(recipeBase.quad,ui.capture!!.width,ui.capture!!.height,300.dp)
                     if(stage=="OCR boxes")WordOverlay(ui,300.dp)
                 }
@@ -312,16 +337,15 @@ import java.util.Locale
             }})
     }
 }
-@Composable private fun CardPair(r:RegionEntity,doc:DocumentSnapshot,busy:Boolean,send:(UiAction)->Unit){
-    var side by rememberSaveable(r.id,r.side){mutableStateOf(r.side)}
-    var label by rememberSaveable(r.id,r.pairLabel){mutableStateOf(r.pairLabel)}
+@Composable private fun CardPair(r:RegionEntity,doc:DocumentSnapshot,edit:CardLabelEdit,busy:Boolean,onChange:(CardLabelEdit)->Unit){
+    val side=edit.side
+    val label=edit.label
     val capture=doc.captures.single{it.id==r.captureId}
     Column(Modifier.fillMaxWidth().silkPanel(radius=18.dp).padding(17.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
         ScanImage(r.correctedPath?:capture.uprightPath,"Card ${r.position+1}",Modifier.fillMaxWidth().height(155.dp))
-        Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Text("Region ${r.position+1}",Modifier.weight(1f),style=MaterialTheme.typography.titleSmall);SilkSelect(listOf("FRONT","BACK","SINGLE"),side,label={it.lowercase().replaceFirstChar(Char::uppercase)}){side=it}}
-        if(side!="SINGLE")SilkField(label,{label=it},"Pair label")
+        Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Text("Region ${r.position+1}",Modifier.weight(1f),style=MaterialTheme.typography.titleSmall);SilkSelect(listOf("FRONT","BACK","SINGLE"),side,enabled=!busy,label={it.lowercase().replaceFirstChar(Char::uppercase)}){onChange(edit.copy(side=it))}}
+        if(side!="SINGLE")SilkField(label,{onChange(edit.copy(label=it))},"Pair label",enabled=!busy)
         SilkCaption(if(side=="SINGLE")"Single-sided card" else "Use the same label for matching front and back.")
-        if(side!=r.side || (if(side=="SINGLE")"" else label.trim())!=r.pairLabel)SilkButton("Save card labels","check",false,!busy){send(UiAction.Label(r.id,side,if(side=="SINGLE")"" else label))}
     }
 }
 @Composable private fun OrganizerCard(r:RegionEntity,doc:DocumentSnapshot,busy:Boolean,edit:(String)->Unit,move:(Int)->Unit,remove:()->Unit){
@@ -352,10 +376,10 @@ import java.util.Locale
 }
 @Composable private fun Summary(label:String,value:String){Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){SilkCaption(label);Text(value,style=MaterialTheme.typography.bodySmall)}}
 @Composable private fun SettingRow(title:String,description:String,control:@Composable ()->Unit){Column{Row(Modifier.fillMaxWidth().padding(vertical=20.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)){Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(5.dp)){Text(title,style=MaterialTheme.typography.titleSmall);SilkCaption(description)};control()};HorizontalDivider(color=Silk.line)}}
-@Composable private fun SilkSelect(options:List<String>,selected:String,fullWidth:Boolean=false,label:(String)->String={it},onSelect:(String)->Unit){
+@Composable private fun SilkSelect(options:List<String>,selected:String,fullWidth:Boolean=false,enabled:Boolean=true,label:(String)->String={it},onSelect:(String)->Unit){
     var open by remember{mutableStateOf(false)}
     Box{
-        Row(Modifier.then(if(fullWidth)Modifier.fillMaxWidth().silkPanel(inset=true,radius=12.dp) else Modifier).heightIn(min=48.dp).clip(RoundedCornerShape(12.dp)).clickable(role=Role.DropdownList){open=true}.padding(horizontal=12.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)){
+        Row(Modifier.then(if(fullWidth)Modifier.fillMaxWidth().silkPanel(inset=true,radius=12.dp) else Modifier).heightIn(min=48.dp).clip(RoundedCornerShape(12.dp)).clickable(enabled=enabled,role=Role.DropdownList){open=true}.padding(horizontal=12.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)){
             Text(label(selected),Modifier.then(if(fullWidth)Modifier.weight(1f) else Modifier),style=MaterialTheme.typography.bodySmall);SilkIcon("down",Modifier.size(14.dp),Silk.muted)
         }
         DropdownMenu(open,{open=false},containerColor=Silk.surface){options.forEach{item->DropdownMenuItem(text={Text(label(item))},onClick={onSelect(item);open=false})}}
@@ -365,14 +389,6 @@ import java.util.Locale
 @Composable private fun SilkConfirm(title:String,body:String,dismiss:()->Unit,confirm:()->Unit){AlertDialog(onDismissRequest=dismiss,title={Text(title)},text={SilkCaption(body)},confirmButton={TextButton(onClick=confirm){Text("Confirm")}},dismissButton={TextButton(onClick=dismiss){Text("Keep")}},containerColor=Silk.surface)}
 private fun dateLabel(time:Long)=if(System.currentTimeMillis()-time<86400000)"Today" else if(System.currentTimeMillis()-time<172800000)"Yesterday" else SimpleDateFormat("d MMM",Locale.getDefault()).format(Date(time))
 fun layoutSheets(doc:DocumentSnapshot):List<Sheet> = PageLayout.sheets(doc.regions.sortedBy{it.position}.map{r->val c=doc.captures.single{it.id==r.captureId};LayoutRegion(r.id,r.correctedWidth?:c.width,r.correctedHeight?:c.height,CardSide.valueOf(r.side),r.pairLabel)},doc.document.mode=="CARDS",doc.document.template,doc.document.paper,doc.document.margin)
-
-private fun previewFilter(filter:String,brightness:Float,contrast:Float):ColorFilter?{
-    if(filter=="ORIGINAL")return null
-    val matrix=android.graphics.ColorMatrix().apply{if(filter in listOf("GRAYSCALE","BLACK_WHITE"))setSaturation(0f)}
-    val c=contrast*(if(filter=="BLACK_WHITE")2f else 1f);val bias=brightness*2.55f+128f*(1-c)
-    matrix.postConcat(android.graphics.ColorMatrix(floatArrayOf(c,0f,0f,0f,bias,0f,c,0f,0f,bias,0f,0f,c,0f,bias,0f,0f,0f,1f,0f)))
-    return ColorFilter.colorMatrix(ColorMatrix(matrix.array))
-}
 
 @Composable private fun WordOverlay(ui:ScannerUi,height:Dp,firstOnly:Boolean=false){
     val r=ui.region?:return;val c=ui.capture?:return

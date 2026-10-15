@@ -59,9 +59,15 @@ class UiGalleryActivity:ComponentActivity(){
             is UiAction.EnhanceAndRead->state.copy(route="06")
             is UiAction.ReviewAndContinue->state.copy(route=action.next)
             UiAction.ConfirmCards->try{layoutSheets(state.document!!);state.copy(route="08")}catch(failure:Exception){reviewMessage=failure.message;state}
+            is UiAction.ConfirmCardLabels->try{
+                val proposed=state.document!!.copy(regions=state.document!!.regions.map{r->val edit=action.edits.single{it.id==r.id};r.copy(side=edit.side,pairLabel=if(edit.side=="SINGLE")"" else edit.label.trim())})
+                layoutSheets(proposed);state.copy(route="08",document=proposed)
+            }catch(failure:Exception){reviewMessage=failure.message;state}
             is UiAction.NamedNavigation->state.copy(document=state.document?.let{it.copy(document=it.document.copy(title=action.title))},route=action.route,activeId=action.regionId?:state.activeId,editorReturn=if(action.regionId!=null)"08" else null)
             is UiAction.Label->state.copy(document=state.document!!.copy(regions=state.document!!.regions.map{if(it.id==action.id)it.copy(side=action.side,pairLabel=action.label) else it}))
             is UiAction.CreatePdf->state.copy(route="11",document=state.document!!.copy(exports=listOf(state.export!!.copy(mode=action.mode,path=File(cacheDir,if(action.mode=="TEXT")"ui-review-text.pdf" else "ui-review-scan.pdf").path))))
+            is UiAction.NamedBack->state.copy(route=if(state.route=="08")"01" else "09",document=state.document?.let{it.copy(document=it.document.copy(title=action.title))})
+            is UiAction.ReadForExport->state.copy(route="06",editorReturn="10")
             is UiAction.Query->state.copy(query=action.value,searchResults=state.library.filter{it.title.contains(action.value,true)})
             is UiAction.SaveDefaults->state.copy(route="01",defaults=action.value)
             is UiAction.Layout->state.copy(document=state.document!!.copy(document=state.document!!.document.copy(template=action.template,paper=action.paper,margin=action.margin)))

@@ -14,17 +14,25 @@ import xml.etree.ElementTree as ET
 root = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
 parser.add_argument('--avd', required=True, help='An already installed AVD; nothing is downloaded')
+parser.add_argument('--reference-viewport', action='store_true', help='Match the approved 390x844 dp screen reference')
+parser.add_argument('--port', type=int, default=5556, help='Unused even emulator port for this isolated run')
+parser.add_argument('--visible', action='store_true', help='Show the emulator window during verification')
+parser.add_argument('--keep-open', action='store_true', help='Leave a successful visible emulator running with Folio open')
 args = parser.parse_args()
+if args.port % 2 or not 5554 <= args.port <= 5682:
+    parser.error('--port must be an even emulator port between 5554 and 5682')
+if args.keep_open and not args.visible:
+    parser.error('--keep-open requires --visible')
 sdk = Path(os.environ.get('ANDROID_HOME') or os.environ.get('ANDROID_SDK_ROOT') or Path.home() / 'Library/Android/sdk')
 adb = str(sdk / 'platform-tools/adb')
 emulator = str(sdk / 'emulator/emulator')
 output = root / 'output/android'
 output.mkdir(parents=True, exist_ok=True)
-env = os.environ.copy()
-studio_jdk = Path('/Applications/Android Studio.app/Contents/jbr/Contents/Home')
-if not env.get('JAVA_HOME') and studio_jdk.is_dir():
-    env['JAVA_HOME'] = str(studio_jdk)
+from android_toolchain import build_environment
+env = build_environment()
 report = {'timestamp': datetime.now(timezone.utc).isoformat(), 'avd': args.avd, 'status': 'failed', 'deviceTests': {}, 'activityLaunched': False}
+report['sourceRevision'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
+report['sourceDirty'] = bool(subprocess.check_output(['git', 'status', '--porcelain', '--', 'android', 'tools'], cwd=root, text=True).strip())
 owned = None
 log_handle = None
 exit_code = 1
@@ -40,18 +48,19 @@ try:
     # Reserve an unused emulator pair; never target or terminate another instance.
     ports = []
     try:
-        for port in (5556, 5557):
+        for port in (args.port, args.port+1):
             sock = socket.socket(); ports.append(sock); sock.bind(('127.0.0.1', port))
     finally:
         for sock in ports: sock.close()
-    serial = 'emulator-5556'
+    serial = 'emulator-' + str(args.port)
     devices = run([adb, 'devices'], capture_output=True).stdout
     if serial in devices:
         raise RuntimeError('Reserved emulator serial is already in use.')
     log_handle = (output / 'device-emulator.log').open('w')
-    owned = subprocess.Popen([emulator, '-avd', args.avd, '-port', '5556', '-read-only', '-no-window',
-        '-no-audio', '-no-snapshot', '-gpu', 'swiftshader', '-memory', '2048'],
-        stdout=log_handle, stderr=subprocess.STDOUT, env=env)
+    owned = subprocess.Popen([emulator, '-avd', args.avd, '-port', str(args.port), '-read-only',
+        *([] if args.visible else ['-no-window']), '-no-audio', '-no-snapshot', '-gpu', 'swiftshader', '-memory', '2048'],
+        stdout=log_handle, stderr=subprocess.STDOUT, env=env, start_new_session=True)
+    report['emulatorPid'] = owned.pid
     deadline = time.monotonic() + 240
     while time.monotonic() < deadline:
         if owned.poll() is not None:
@@ -62,6 +71,10 @@ try:
     else:
         raise RuntimeError('Emulator boot timed out.')
     report['sdkInt'] = run([adb, '-s', serial, 'shell', 'getprop', 'ro.build.version.sdk'], capture_output=True).stdout.strip()
+    if args.reference_viewport:
+        run([adb,'-s',serial,'shell','wm','size','780x1688'],capture_output=True)
+        run([adb,'-s',serial,'shell','wm','density','320'],capture_output=True)
+        report['referenceViewport'] = {'widthDp':390,'heightDp':844,'densityDpi':320}
     env['ANDROID_SERIAL'] = serial
     wrapper = 'gradlew.bat' if os.name == 'nt' else './gradlew'
     with (output / 'device-tests.log').open('w') as stream:
@@ -73,13 +86,18 @@ try:
         suite = ET.parse(path).getroot()
         for key in counts: counts[key] += int(suite.get(key, '0'))
     report['deviceTests'] = counts
-    if result.returncode or counts['tests'] < 27 or counts['failures'] or counts['errors'] or counts['skipped']:
+    if result.returncode or counts['tests'] < 34 or counts['failures'] or counts['errors'] or counts['skipped']:
         raise RuntimeError('Device tests did not all pass; inspect device-tests.log and Gradle reports.')
     # Synthetic evidence published by the native round-trip test survives test-target teardown.
     acceptance = output / 'acceptance'
     acceptance.mkdir(parents=True, exist_ok=True)
     for filename in ('searchable.pdf', 'regenerated.pdf', 'native-preview.png'):
         run([adb, '-s', serial, 'pull', '/sdcard/Download/FolioVerification/' + filename, str(acceptance / filename)], capture_output=True)
+    ui_evidence = output / 'ui-parity'
+    ui_evidence.mkdir(parents=True, exist_ok=True)
+    for route in [f'{i:02}' for i in range(1,16)] + ['intro-1','intro-2']:
+        for suffix in ('','-large','-narrow-large'):
+            run([adb, '-s', serial, 'pull', '/sdcard/Download/FolioUiParity/' + route + suffix + '.png', str(ui_evidence / (route + suffix + '.png'))], capture_output=True)
     # Connected instrumentation may uninstall its target during teardown.
     # Install the app explicitly before the independent launch gate.
     run([adb, '-s', serial, 'install', '-r', str(root / 'android/app/build/outputs/apk/debug/app-debug.apk')], capture_output=True)
@@ -98,7 +116,9 @@ try:
 except Exception as error:
     report['error'] = str(error)
 finally:
-    if owned is not None and owned.poll() is None:
+    retain = args.keep_open and report['status'] == 'passed' and owned is not None and owned.poll() is None
+    report['emulatorLeftOpen'] = retain
+    if owned is not None and owned.poll() is None and not retain:
         owned.terminate()
         try: owned.wait(timeout=15)
         except subprocess.TimeoutExpired: owned.kill(); owned.wait()

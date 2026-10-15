@@ -16,6 +16,7 @@ import kotlin.math.roundToInt
 /** Originals and OCR working copies are owned by the app; URI grants are not needed after import. */
 class PrivateImageStore(private val context: Context) {
     private val root = File(context.filesDir, "scans")
+    fun previewDirectory(id:String):File { UUID.fromString(id);return File(context.cacheDir,"scan-previews/$id") }
     private fun directory(id: String): File {
         UUID.fromString(id)
         return File(root, id)

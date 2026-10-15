@@ -12,6 +12,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.rohanc.ocrscanner.MainActivity
 import com.rohanc.ocrscanner.ScannerApplication
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.first
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -70,5 +71,22 @@ class NativeRecoveryTest {
         val vm=ScannerViewModel(application,state)
         try{vm.back();assertEquals("10",vm.route.value);vm.editorReturn="08";assertEquals("08",state.get<String>("editorReturn"))}
         finally{androidx.lifecycle.ViewModelStore().apply{put("test",vm);clear()}}
+    }
+    @Test fun failedImportRetainsCapturedFileAndCameraRouteForRetry(){
+        val before=runBlocking{application.repository.library.first().map{it.id}.toSet()}
+        val file=File.createTempFile("failed-capture-",".jpg",application.cacheDir).apply{writeText("unreadable capture")}
+        val state=SavedStateHandle(mapOf("route" to "03"))
+        val vm=ScannerViewModel(application,state)
+        val store=androidx.lifecycle.ViewModelStore().apply{put("test",vm)}
+        try{
+            rule.runOnUiThread{vm.importImages(listOf(Uri.fromFile(file)),temporaries=listOf(file))}
+            rule.waitUntil(15000){vm.message.value!=null}
+            assertTrue("Capture needed for retry was removed",file.exists())
+            assertEquals("03",vm.route.value)
+            assertEquals("Failed initial import must not leave a mode-locked empty draft",before,runBlocking{application.repository.library.first().map{it.id}.toSet()})
+        }finally{
+            rule.runOnUiThread{store.clear()};file.delete()
+            runBlocking{state.get<String>("document")?.let{id->val s=application.repository.snapshot(id);application.repository.delete(id,s.document.revision)}}
+        }
     }
 }

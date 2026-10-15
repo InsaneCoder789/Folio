@@ -8,7 +8,7 @@ data class ScannerUi(
     val route:String="01",val library:List<LibraryItem> = emptyList(),val document:DocumentSnapshot?=null,
     val activeId:String?=null,val mode:String="DOCUMENT",val busy:Boolean=false,val defaults:ScannerDefaults=ScannerDefaults(),
     val detected:List<Quad> = emptyList(),val labPath:String?=null,val searchResults:List<LibraryItem> = emptyList(),val query:String="",
-    val editorReturn:String?=null,val workflow:String="paired"
+    val editorReturn:String?=null,val workflow:String="paired",val previewPath:String?=null
 ){
     val region get()=document?.regions?.firstOrNull{it.id==activeId}?:document?.regions?.minByOrNull{it.position}
     val capture get()=document?.captures?.firstOrNull{it.id==region?.captureId}
@@ -38,10 +38,14 @@ sealed interface UiAction{
     data class EnhanceAndRead(val recipe:EditRecipe):UiAction
     data class ReviewAndContinue(val value:String,val next:String):UiAction
     data class NamedNavigation(val title:String,val route:String,val regionId:String?=null):UiAction
+    data class NamedBack(val title:String):UiAction
+    data class ReadForExport(val title:String):UiAction
     data class CreatePdf(val title:String,val mode:String):UiAction
     data class SaveDefaults(val value:ScannerDefaults):UiAction
     data class Error(val message:String):UiAction
     data class Correct(val recipe:EditRecipe,val next:String):UiAction
+    data class Preview(val recipe:EditRecipe):UiAction
+    data object ClearPreview:UiAction
     data object Detect:UiAction
     data object AddRegion:UiAction
     data object SplitRegions:UiAction
@@ -51,6 +55,7 @@ sealed interface UiAction{
     data class Review(val value:String):UiAction
     data class Label(val id:String,val side:String,val label:String):UiAction
     data object ConfirmCards:UiAction
+    data class ConfirmCardLabels(val edits:List<CardLabelEdit>):UiAction
     data class Rename(val value:String):UiAction
     data class Move(val id:String,val delta:Int):UiAction
     data class Remove(val id:String):UiAction

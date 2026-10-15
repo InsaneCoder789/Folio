@@ -30,6 +30,9 @@ jobs:
         run: sdkmanager 'platforms;android-36' 'build-tools;35.0.0' 'build-tools;36.0.0'
       - name: Build, test, lint and compile device tests
         run: python3 tools/verify_android.py
+      - name: Build optimized unsigned release and app bundle
+        working-directory: android
+        run: ./gradlew --no-daemon --console=plain :app:assembleRelease :app:bundleRelease :app:lintRelease
       - name: Upload verification reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -40,4 +43,6 @@ jobs:
             output/android/build.log
             android/app/build/reports/tests/
             android/app/build/reports/lint-results-debug.*
+            android/app/build/reports/lint-results-release.*
+            android/app/build/outputs/mapping/release/
           retention-days: 7

@@ -74,10 +74,65 @@ class VisionAndPdfTest {
         assertTrue(result.pageCount>1)
         PDDocument.load(File(result.path)).use{val text=PDFTextStripper().getText(it);assertTrue(text.contains("paragraph 199 café"));assertTrue(text.contains("paragraph 0 café"))}
     }}
+    @Test fun nativeTextPaginationHasNoDuplicateOrRasterizedParagraphs()=runBlocking{inDirectory{dir->
+        val s=snapshot(image(dir),List(200){"Folio paragraph $it café"}.joinToString("\n"))
+        val result=ScannerPdfExporter(context).export(s,"TEXT",PageLayout.sheets(listOf(LayoutRegion("r",800,600)),false,"Stacked","Letter",36f),dir)
+        PDDocument.load(File(result.path)).use{pdf->
+            assertTrue(pdf.numberOfPages>1)
+            val text=PDFTextStripper().getText(pdf)
+            for(i in 0 until 200)assertEquals("Paragraph $i should appear once",1,Regex(Regex.escape("Folio paragraph $i café")).findAll(text).count())
+            for(page in pdf.pages){
+                assertEquals(612f,page.mediaBox.width,0f);assertEquals(792f,page.mediaBox.height,0f)
+                assertFalse("Regenerated text must not be a page bitmap",page.resources.xObjectNames.iterator().hasNext())
+            }
+        }
+        assertTrue(dir.listFiles().orEmpty().none{it.extension=="partial"})
+    }}
+    @Test fun nativeTextPagesRenderInsideTheirMargins()=runBlocking{inDirectory{dir->
+        val s=snapshot(image(dir),List(120){"Visible native paragraph $it"}.joinToString("\n"))
+        val result=ScannerPdfExporter(context).export(s,"TEXT",PageLayout.sheets(listOf(LayoutRegion("r",800,600)),false,"Stacked","A4",36f),dir)
+        ParcelFileDescriptor.open(File(result.path),ParcelFileDescriptor.MODE_READ_ONLY).use{fd->PdfRenderer(fd).use{pdf->
+            assertTrue(pdf.pageCount>1)
+            for(index in 0 until pdf.pageCount)pdf.openPage(index).use{page->
+                val bitmap=Bitmap.createBitmap(page.width,page.height,Bitmap.Config.ARGB_8888)
+                try{
+                    bitmap.eraseColor(Color.WHITE);page.render(bitmap,null,null,PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                    val pixels=IntArray(page.width*page.height);bitmap.getPixels(pixels,0,page.width,0,0,page.width,page.height)
+                    val ink=pixels.indices.filter{Color.red(pixels[it])<180}
+                    assertTrue("Page ${index+1} has no visible text",ink.size>50)
+                    assertTrue("Text crosses the left margin",ink.all{it%page.width>=35})
+                    assertTrue("Text crosses the right margin",ink.all{it%page.width<page.width-35})
+                    assertTrue("Text crosses the bottom margin",ink.all{it/page.width<page.height-35})
+                }finally{bitmap.recycle()}
+            }
+        }}
+    }}
     @Test fun rewrittenTextCannotBecomeMisalignedSearchablePdf()=runBlocking{inDirectory{dir->
         val s=snapshot(image(dir)).let{it.copy(regions=it.regions.map{r->r.copy(reviewedText="Completely rewritten paragraph")})}
         try{ScannerPdfExporter(context).export(s,"SEARCHABLE",PageLayout.sheets(listOf(LayoutRegion("r",800,600)),false,"Stacked","A4",36f),dir);fail("Misaligned review accepted")}
         catch(_:IllegalArgumentException){}
         assertTrue(dir.listFiles().orEmpty().none{it.extension in listOf("pdf","partial")})
+    }}
+    @Test fun failedNativeWriteKeepsThePreviousCompletedPdf()=runBlocking{inDirectory{dir->
+        val s=snapshot(image(dir));val sheets=PageLayout.sheets(listOf(LayoutRegion("r",800,600)),false,"Stacked","A4",36f)
+        val exporter=ScannerPdfExporter(context);val previous=exporter.export(s,"SEARCHABLE",sheets,dir)
+        val bytes=File(previous.path).readBytes()
+        val blocked=File(dir,"blocked-directory").apply{writeText("Not a directory")}
+        try{exporter.export(s,"TEXT",sheets,blocked);fail("Unwritable destination accepted")}catch(_:java.io.IOException){}
+        assertArrayEquals(bytes,File(previous.path).readBytes())
+        assertTrue(dir.listFiles().orEmpty().none{it.extension=="partial"})
+        PDDocument.load(File(previous.path)).use{assertTrue(PDFTextStripper().getText(it).contains("Folio café"))}
+    }}
+    @Test fun maximumScanExportKeepsAllPagesAndRemovesNativeIntermediates()=runBlocking{inDirectory{dir->
+        val s=snapshot(image(dir))
+        val many=s.copy(regions=(0 until 48).map{i->s.regions.single().copy(id="r$i",position=i)})
+        val sheets=PageLayout.sheets(many.regions.map{LayoutRegion(it.id,800,600)},false,"Stacked","A4",36f)
+        val result=ScannerPdfExporter(context).export(many,"SEARCHABLE",sheets,dir)
+        assertEquals(48,result.pageCount)
+        PDDocument.load(File(result.path)).use{pdf->
+            assertEquals(48,pdf.numberOfPages)
+            assertEquals(48,Regex(Regex.escape("Folio café")).findAll(PDFTextStripper().getText(pdf)).count())
+        }
+        assertTrue("Native intermediate pages were not cleaned",dir.listFiles().orEmpty().none{it.extension=="partial"})
     }}
 }

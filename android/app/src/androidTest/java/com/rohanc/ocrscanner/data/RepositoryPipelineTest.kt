@@ -8,7 +8,8 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.rohanc.ocrscanner.core.*
 import com.rohanc.ocrscanner.core.pdf.ScannerPdfExporter
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.produceIn
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,7 +33,15 @@ class RepositoryPipelineTest {
         var snapshot=repo.snapshot(id);val region=snapshot.regions.single()
         repo.recognize(id,region.id);snapshot=repo.snapshot(id)
         assertTrue(snapshot.regions.single().recognizedText!!.contains("FOLIO"))
-        val export=repo.export(id,snapshot.document.revision,"SEARCHABLE")
+        val libraryEvents=repo.library.produceIn(this@runBlocking)
+        val export=try {
+            val initial=withTimeout(5000){libraryEvents.receive()}.single{it.id==id}
+            val result=repo.export(id,snapshot.document.revision,"SEARCHABLE")
+            val changed=withTimeout(5000){libraryEvents.receive()}.single{it.id==id}
+            assertTrue("Publishing a PDF must refresh its library summary",changed.updatedAt>initial.updatedAt)
+            assertEquals("Library refresh must not make the PDF stale",result.sourceRevision,changed.revision)
+            result
+        }finally{libraryEvents.cancel()}
         assertTrue(File(export.path).exists())
         repo.rename(id,snapshot.document.revision,"Changed title")
         assertNotEquals(export.sourceRevision,repo.snapshot(id).document.revision)

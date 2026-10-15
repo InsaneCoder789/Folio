@@ -22,6 +22,7 @@ object RevisionRules {
 
 enum class CardSide { FRONT, BACK, SINGLE }
 data class CardRegion(val id: String, val side: CardSide, val pairLabel: String = "")
+data class CardLabelEdit(val id: String, val side: String, val label: String)
 
 /** Packs whole confirmed pairs together; does not infer identity from OCR. */
 object CardLayout {
