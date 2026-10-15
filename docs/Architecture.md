@@ -185,9 +185,76 @@ A local browser prototype now represents this navigation and Silk visual languag
 
 ## Native implementation boundary
 
-`android/` now contains a minimal Compose integration surface, Room metadata, private image import, bundled Latin ML Kit adapter and revision-checked repository. Full native navigation, correction and PDF/card workflows remain pending. The on-device architecture needs no separate HTTP backend. See [Backend.md](Backend.md) for pinned dependencies and current scope.
+`android/` contains all 15 approved Compose routes, boot/onboarding, Room v3 metadata, private image import, CameraX capture, OpenCV correction, bundled Latin ML Kit and revision-checked PDF/card workflows. The on-device architecture needs no separate HTTP backend. See [Backend.md](Backend.md) for pinned dependencies and remaining scope.
 
 
 ## Native processing increment
 
-The Kotlin sources now implement the planned component path using CameraX, OpenCV, bundled ML Kit, Room v2 and WorkManager. PDFBox Android is the provisional PDF engine; Android PdfRenderer provides an independent visual renderer, and text extraction tests check the saved text layer. Edited paragraphs use regenerated output until geometry alignment is explicitly supported. Physical-device and broader reader acceptance are still pending; see Backend.md and Testing.md for exact evidence boundaries.
+The Kotlin component path uses CameraX, OpenCV, bundled ML Kit, Room v3 and WorkManager. PdfDocument authors visible pages; PDFBox appends invisible text and validates extraction. PdfRenderer previews finished files. Edited paragraphs use regenerated output until geometry alignment is supported. Physical-device and broader reader acceptance remain open; see Backend.md and Testing.md for exact evidence boundaries.
+
+## Android PdfDocument integration - 15 October 2026
+
+The user-selected [Android PdfDocument API](https://developer.android.com/reference/kotlin/android/graphics/pdf/PdfDocument) generates new PDFs from Canvas content. It does not perform OCR, detect cards, or import/read existing PDFs. ML Kit remains the recognition engine; PdfRenderer remains the preview engine.
+
+```mermaid
+flowchart LR
+    A[Corrected images / reviewed text] --> B[AndroidPdfPageWriter: PdfDocument + Canvas]
+    B --> C[Visible scan or paragraph pages]
+    D[ML Kit words + polygons] --> E[PDFBox invisible text overlay]
+    C --> E
+    E --> F[Validate text + pages / atomic publish]
+    F --> G[PdfRenderer / Files / FileProvider]
+```
+
+PdfDocument writes all visible content for both agreed outputs. Android StaticLayout wraps and paginates regenerated paragraphs. Only each page's character range is drawn, preventing duplicate text outside page bounds. PDFBox preserves native pages, appends invisible word geometry for searchable scans, adds metadata and verifies the completed file. Transparent Canvas text is not used as a substitute for a validated searchable layer. Native and final intermediate files are removed on failure; the previous completed export is retained.
+
+The native writer passed the 45-test Pixel gate, followed by 49 tests covering disk-backed 48-sheet merging and storage boundaries. The separate setup process-death probe also passed. A later accessible-crop build passes compilation/JVM/lint, but installation and its 51-test gate are blocked by emulator storage.
+
+## Handwriting model boundary
+
+```mermaid
+flowchart LR
+    A[Corrected full page] --> B[Detect and order text lines]
+    B --> C[Handwriting line recognizer]
+    C --> D[Text with measured geometry]
+    D --> E[Review / searchable PDF]
+    F[Licensed line images and labels] --> G[Train / validate / held-out test]
+    G --> H{Quality and mobile gates}
+    H -->|Accepted| C
+```
+
+The first 300-step line-recognizer pilot completed but failed the quality requirement: held-out CER 76.3%, with no exact lines among 40. Its checkpoint remains local and is not integrated. Published baseline partitions provide a larger, document-separated next dataset; historical handwriting and unknown writer IDs limit the claims. Full-page line detection, modern handwriting evaluation, export/runtime compatibility and on-device measurement remain required.
+
+### Handwriting experiment boundary
+
+```mermaid
+flowchart LR
+    Source[Official train photographs] --> Review[Crop and exact-label review]
+    Review --> Train[30 admitted training lines]
+    ValSource[Separate validation photographs] --> Val[13 reviewed validation lines]
+    Train --> Adapt[Pinned TrOCR-base decoder adaptation]
+    Adapt --> Select[Strict validation CER selection]
+    Val --> Select
+    Baseline[Preserved pretrained checkpoint] --> Select
+    Select --> Integrity[Saved predictions and checkpoint integrity]
+    Integrity --> Final[Independent final test - pending]
+    Final --> Mobile[Mobile export and full-page geometry - pending]
+    Mobile --> Pixel[Pixel quality, latency and memory - pending]
+    Pixel --> App[App promotion only after acceptance]
+```
+
+Photographs and crop hashes stay separate across roles. Writer identities are unknown. The historical Bentham experiment retains its own corpus/license. Validation selects checkpoints; it does not establish final accuracy. The current Android recognizer remains bundled ML Kit.
+
+### Mobile recognizer portability checkpoint
+
+```mermaid
+flowchart LR
+    Crop[Line crop] --> BGR[BGR / height 48 / normalize]
+    BGR --> ONNX[7.87 MB ONNX recognizer]
+    ONNX --> CTC[CTC blank and duplicate decoding]
+    CTC --> Text[Recognized line]
+    Text --> Geometry[Full-page detection and geometry - pending]
+    Geometry --> Device[Android runtime and acceptance - pending]
+```
+
+The host conversion preserves preprocessing and decoded text on 28 reviewed lines. Full-page text detection, placement and Android execution still require implementation/verification. The existing app continues to use bundled ML Kit.
