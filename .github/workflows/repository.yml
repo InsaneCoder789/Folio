@@ -23,3 +23,5 @@ jobs:
           python-version: '3.12'
       - name: Verify data boundaries, metrics and experiment integrity
         run: python -m unittest ml.test_pipeline
+      - name: Verify durable backend job progress
+        run: python -m unittest tools.test_visible_job
