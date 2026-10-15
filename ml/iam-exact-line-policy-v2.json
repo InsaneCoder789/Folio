@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 2,
+  "primaryMetric": "case-sensitive exact-line rate; NFC and collapsed whitespace; punctuation preserved",
+  "maximumCer": 0.05,
+  "maximumWer": 0.15,
+  "minimumRelativeCerImprovement": 0.1,
+  "minimumExactLineRate": 0.75,
+  "minimumEvaluationLines": 500,
+  "maximumExperimentsBeforeReview": 1,
+  "testPolicy": "No test decoding until validation-selected checkpoint is frozen",
+  "foundationCaveat": "TrOCR handwritten foundations already used IAM; this is adaptation, not an unseen-corpus claim",
+  "readiness": "Passing line gates is insufficient for full-page or Android release",
+  "stretchExactLineRate": 0.8,
+  "checkpointSelection": "highest validation exact-line rate; tie-break lower validation CER; never select by final test",
+  "evaluationBoundary": "The v1 final IAM test has been evaluated. Further choices use validation only; new final evidence needs a separate locked holdout or explicitly disclosed reused benchmark.",
+  "priorPolicyPreserved": "ml/iam-experiment-policy.json",
+  "publicationGate": "Do not publish weights as accepted until this policy and source/model redistribution requirements are verified"
+}

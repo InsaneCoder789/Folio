@@ -13,3 +13,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check tracked source and documentation boundaries
         run: python3 tools/verify_repository.py
+  handwriting-pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify data boundaries, metrics and experiment integrity
+        run: python -m unittest ml.test_pipeline

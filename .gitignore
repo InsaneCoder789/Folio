@@ -29,3 +29,46 @@ design/stitch.json
 
 # This native Android repository does not publish HTML references
 *.html
+
+# Local handwriting data, model caches and training artifacts
+/ml/data/
+/ml/artifacts/
+/ml/checkpoints/
+/ml/.venv/
+/ml/**/*.safetensors
+/ml/**/*.pt
+/ml/**/*.pth
+/ml/**/*.ckpt
+/ml/**/*.onnx
+/ml/**/*.pdiparams
+/ml/**/*.pdmodel
+/ml/**/*.bin
+/ml/**/*.pkl
+/ml/**/*.pickle
+/ml/**/*.npz
+/ml/**/*.npy
+/ml/**/*.zip
+/ml/**/*.tgz
+/ml/**/*.gz
+/ml/**/*.png
+/ml/**/*.jpg
+/ml/**/*.jpeg
+/ml/**/*.webp
+/ml/**/*.pdf
+__pycache__/
+*.pyc
+
+# Local host environments and training inputs at any nesting level
+.venv/
+venv/
+*.safetensors
+*.ckpt
+*.onnx
+*.pt
+*.pth
+*.pdiparams
+*.pdmodel
+*.zip
+*.tgz
+*.tar
+*.tar.gz

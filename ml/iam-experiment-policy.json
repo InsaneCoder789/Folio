@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "primaryMetric": "case-sensitive corpus CER; NFC and collapsed whitespace",
+  "maximumCer": 0.05,
+  "maximumWer": 0.15,
+  "minimumRelativeCerImprovement": 0.1,
+  "minimumExactLineRate": 0.6,
+  "minimumEvaluationLines": 500,
+  "maximumExperimentsBeforeReview": 1,
+  "testPolicy": "No test decoding until validation-selected checkpoint is frozen",
+  "foundationCaveat": "TrOCR handwritten foundations already used IAM; this is adaptation, not an unseen-corpus claim",
+  "readiness": "Passing line gates is insufficient for full-page or Android release"
+}

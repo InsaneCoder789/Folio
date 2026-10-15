@@ -1,0 +1,6 @@
+# Isolated host comparison runtime; keep separate from the TrOCR environment.
+paddlepaddle==3.3.1
+paddleocr==3.7.0
+paddlex==3.7.2
+Pillow==11.3.0
+numpy==2.2.6

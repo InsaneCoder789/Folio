@@ -1,0 +1,198 @@
+{
+  "schemaVersion": 1,
+  "asOf": "2026-10-15",
+  "status": "experimental-not-accepted",
+  "appReady": false,
+  "promotedToAndroid": false,
+  "scope": "Curated aggregate experimental evidence. No dataset images, transcriptions, raw predictions or weights are distributed.",
+  "sourceReports": [
+    {
+      "localArtifact": "ml/artifacts/iam-adaptation-v1/training-report.json",
+      "sha256": "059ba6737f85d54543f35f6089f90432bf10fc745559ed24a972942f3fd62b86",
+      "includedInRepository": false
+    },
+    {
+      "localArtifact": "ml/artifacts/iam-frozen-test-v1/evaluation-report.json",
+      "sha256": "1cf06c5271a219cd74d2e18ef529eb000c483dc4656733dd600d2818d40c973c",
+      "includedInRepository": false
+    },
+    {
+      "localArtifact": "ml/artifacts/iam-beam4-validation-v1/evaluation-report.json",
+      "sha256": "0b009aecd0fc543e5fb24763c069ad50311ec2b149b26e60d3fa6274bb14a393",
+      "includedInRepository": false
+    },
+    {
+      "localArtifact": "ml/artifacts/fullpage-custom-diagnostic-v1/diagnostic-report.json",
+      "sha256": "61e0edc80b6e8b050484382f9be920df2cb6888b41fa8e0087bf16130cace6b5",
+      "includedInRepository": false
+    }
+  ],
+  "corpus": {
+    "name": "IAM handwritten forms, locally supplied archive with matching ASCII metadata",
+    "officialBenchmarkSplit": false,
+    "writerSeparated": true,
+    "sourcePages": 1539,
+    "lineCrops": 13353,
+    "splits": {
+      "train": {
+        "lines": 11444,
+        "writers": 545
+      },
+      "validation": {
+        "lines": 881,
+        "writers": 53
+      },
+      "test": {
+        "lines": 1028,
+        "writers": 59
+      }
+    },
+    "foundationCaveat": "Upstream handwritten TrOCR already used IAM; no unseen-corpus claim."
+  },
+  "training": {
+    "baseModel": "microsoft/trocr-base-handwritten",
+    "baseRevision": "eaacaf452b06415df8f10bb6fad3a4c11e609406",
+    "stepsRequested": 2861,
+    "hyperparameters": {
+      "learningRate": 2e-06,
+      "accumulation": 4,
+      "encoderLearningRate": null,
+      "evalEvery": 1000,
+      "maxTokens": 128,
+      "weightDecay": 0.01,
+      "gradientClipNorm": 1.0,
+      "generationBeams": 1
+    },
+    "frozenEncoder": true,
+    "device": "mps",
+    "seed": 20261015,
+    "lossContract": "explicit aligned token cross-entropy; decoder inputs shifted once"
+  },
+  "selectedCheckpoint": {
+    "update": 2000,
+    "selection": "Lowest validation CER under original v1 policy; not selected on test",
+    "sha256": "a85ee64a7052f26ea72824cd72d681d1685425425226fb2423b2ba6ba5d06bfd"
+  },
+  "frozenIamTest": {
+    "samples": 1028,
+    "decoding": "greedy",
+    "testConsumed": true,
+    "independentlyRescored": true,
+    "results": [
+      {
+        "model": "original",
+        "metrics": {
+          "samples": 1028,
+          "characters": 48078,
+          "words": 9549,
+          "characterErrors": 1014,
+          "wordErrors": 615,
+          "cer": 0.021090727567702482,
+          "wer": 0.06440464970153943,
+          "exactLineRate": 0.6498054474708171,
+          "normalization": "NFC, collapse whitespace, preserve case and punctuation"
+        },
+        "hostSecondsPerLine": 0.4939478257140335
+      },
+      {
+        "model": "fine-tuned",
+        "metrics": {
+          "samples": 1028,
+          "characters": 48078,
+          "words": 9549,
+          "characterErrors": 993,
+          "wordErrors": 568,
+          "cer": 0.02065393735180332,
+          "wer": 0.05948266834223479,
+          "exactLineRate": 0.6614785992217899,
+          "normalization": "NFC, collapse whitespace, preserve case and punctuation"
+        },
+        "hostSecondsPerLine": 0.5344593351575951
+      }
+    ]
+  },
+  "laterValidationDecoding": {
+    "samples": 881,
+    "numBeams": 4,
+    "trainingExecuted": false,
+    "finalTestRead": false,
+    "results": [
+      {
+        "model": "original",
+        "metrics": {
+          "samples": 881,
+          "characters": 39760,
+          "words": 7898,
+          "characterErrors": 1025,
+          "wordErrors": 524,
+          "cer": 0.02577967806841046,
+          "wer": 0.06634591035705242,
+          "exactLineRate": 0.6549375709421112,
+          "normalization": "NFC, collapse whitespace, preserve case and punctuation"
+        },
+        "hostSecondsPerLine": 1.0246151434449229
+      },
+      {
+        "model": "fine-tuned",
+        "metrics": {
+          "samples": 881,
+          "characters": 39760,
+          "words": 7898,
+          "characterErrors": 990,
+          "wordErrors": 487,
+          "cer": 0.024899396378269618,
+          "wer": 0.06166118004558116,
+          "exactLineRate": 0.6469920544835415,
+          "normalization": "NFC, collapse whitespace, preserve case and punctuation"
+        },
+        "hostSecondsPerLine": 1.1630213904653985
+      }
+    ],
+    "validationExactLineTargetMet": false
+  },
+  "fullpageDevelopmentDiagnostic": {
+    "pagesTotal": 15,
+    "pagesCompleted": 15,
+    "fullPageAccuracyMeasured": false,
+    "newHoldout": false,
+    "scope": "Previously reviewed development photos with partial labels; targeted recall/CER, not full-page precision or final accuracy",
+    "targetsMatched": 26,
+    "targetedMetrics": {
+      "samples": 28,
+      "characters": 920,
+      "words": 190,
+      "characterErrors": 441,
+      "wordErrors": 139,
+      "cer": 0.47934782608695653,
+      "wer": 0.7315789473684211,
+      "exactLineRate": 0.03571428571428571,
+      "normalization": "NFC, collapse whitespace, preserve case and punctuation"
+    },
+    "targetRecallAtIoUHalf": 0.9285714285714286,
+    "maximumHostProcessRssBytes": 1968111616,
+    "provenance": {
+      "detectorSha256": "cfcb87395c173a9f48d98d1d247b1006b7ed8224db0286709ce2b96fd38bee96",
+      "recognizerSha256": "a85ee64a7052f26ea72824cd72d681d1685425425226fb2423b2ba6ba5d06bfd",
+      "numBeams": 1,
+      "maxNewTokens": 128,
+      "device": "cpu",
+      "detectorThreshold": 0.3,
+      "boxThreshold": 0.6,
+      "unclipRatio": 1.5
+    }
+  },
+  "acceptance": {
+    "minimumExactLineRate": 0.75,
+    "stretchExactLineRate": 0.8,
+    "targetMet": false,
+    "freshIndependentHoldoutAvailable": false,
+    "weightsRedistributionCleared": false
+  },
+  "verification": {
+    "mlTestsPassed": 66,
+    "visibleJobTestsPassed": 3,
+    "androidJvmTestsPassed": 33,
+    "installedAppBaselineDeviceTestsPassed": 49,
+    "latestSourceInstalledAppAcceptance": false
+  }
+}
