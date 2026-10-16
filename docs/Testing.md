@@ -629,3 +629,36 @@ Completed beam-4 comparison: best strict exact-line configuration was the origin
 The finite runtime/test/diagnostic/package job completed successfully. All 66 ML tests passed. The custom TrOCR pipeline processed 15/15 development photographs and matched 26/28 partial-label targets at IoU 0.5. Targeted CER = 441/920 = 47.93%, WER = 139/190 = 73.16%, exact lines = 1/28 = 3.57%. These results fail practical full-page recognition expectations despite strong target detection; they do not measure complete-page accuracy. Maximum host process RSS was 1,968,111,616 bytes. The local experimental bundle is 1,342,049,381 bytes, SHA256 `f45db2902b1bef50024ea84046e4770ff92fae0194dee0f8db1663d25527597c`; no acceptance or Android promotion is claimed.
 
 Existing Pixel standalone detector evidence also passed all 15 map comparisons with zero mismatched pages. This and the 28-line recognizer parity probe test runtime equivalence, not installed-app integration or custom TrOCR quality. The latest recorded Android build/lint/33-JVM-test gate passed; the installed full-app baseline remains the earlier 49-device-test gate. Public README and aggregate benchmark JSON preserve these boundaries.
+
+
+### Editorial redesign verification - 16 October 2026
+
+The revised local Folio editorial passed 12 interaction/health checks in installed Google Chrome through bundled Playwright. The in-app browser displayed the page but returned inconsistent viewport sizes and screenshot captures, so reliable visual verification used the documented fallback. Checked desktop 1536x1024, mobile 390x844 and 320x844, and 1280x800 reduced-motion/fallback states. No page/shader errors or failed desktop assets were recorded.
+
+Verified primary-anchor navigation; all four scroll/direct process controls; idle WebGL rendering cessation; measured research caveats; manual and OS reduced motion; static no-WebGL fallback; storyboard next/range/chapter controls; no horizontal overflow; and separate existing wireframe/prototype behavior. Editorial and storyboard contain no app/device embeds. Original app test-bench file hashes remain unchanged.
+
+Visual comparison inspected the new generated opening/process/research studies and actual Chrome screenshots: locked headline/nav copy, condensed uppercase hierarchy, black/bone/vermilion palette, asymmetric image/type composition, and separate destinations. Mobile overflow was fixed by clipping the artwork stage within the viewport; the mobile supporting copy gained a black reading surface and the artwork was moved below the main headline. Intentional differences: local Anton type, additional factual research caveats, and illustrative shader movement rather than real OCR. Browser comparisons cover the stated Chrome viewports, not Safari, Firefox or physical-device GPU performance. Temporary screenshots and the execution report remain outside the repository.
+
+
+### Distinct editorial artwork verification - 16 October 2026
+
+All 12 editorial interaction/health checks passed again in Chrome after separating chapter artwork. Added assertions verify different hero/process WebGL texture sources, correct process artwork in the storyboard and mobile fallback, four process controls, idle process rendering cessation, reduced motion, no-WebGL behavior, no device embeds, no horizontal overflow at 390/320px and no page/shader/asset errors. Desktop and process screenshots were inspected. Existing app test-bench hashes remain unchanged.
+
+### Next.js editorial verification — prepared 16 October 2026
+
+New local source: `design/folio-web/`. Preflight `scripts/check-content.mjs` passed: seven distinct nontruncated artwork files, saved prompt provenance, 17 unchanged original test-bench files and exactly six existing `/docs/*.md` files. `scripts/browser-check.mjs` passed Node syntax checking; this does not establish browser success.
+
+The finite validation pipeline installs pinned dependencies, checks protected content, typechecks, builds production output, then runs installed-Chrome verification through bundled Playwright. The browser runner owns a temporary foreground Next server on port 8771 and shuts it down when complete. It checks all six direct workflow controls, idle WebGL, three card layouts, mouse/keyboard PDF tabs, supporting disclosures, research boundaries, the six-stage process guide and fifteen-screen map, process anchors, storyboard range/chapter/next controls, separate test-bench navigation, 390/320px mobile route layouts, reduced motion, no-WebGL fallback, and browser/asset errors. Screenshots and the result record go to `/tmp/folio-next-qa/` for visual inspection. A passing runner still needs comparison of rendered screenshots with generated studies.
+
+**Pending:** dependency installation, production build, execution of this browser matrix and rendered visual review. Earlier static-editorial checks do not transfer automatically to the Next.js implementation. This work does not run or promote the Android app or custom OCR model.
+
+
+### Next.js results and scanner-line refinement — 16 October 2026
+
+The earlier production job completed successfully: dependency installation, content protection, strict TypeScript, production compilation and all 16 installed-Chrome browser checks passed. Result: `/tmp/folio-next-qa/report.json`.
+
+After removing the animated scan-line shader, targeted installed-Chrome verification passed on the live development preview at `127.0.0.1:8771`: WebGL initialization, direct Correct-chapter navigation, meaningful desktop/mobile content, no page/console errors, and no horizontal document overflow at 390px. The first targeted run exposed a 13px mobile library-art overflow, fixed by clipping the library composition. Desktop and mobile screenshots were inspected. TypeScript and artwork/protected-file checks passed again. This targeted refinement has not been production-rebuilt or retested across the entire earlier matrix. The Browser plugin/skill is not available; installed Chrome through bundled Playwright supplied deterministic viewport/console checks. The in-app preview was refreshed separately.
+
+### Website publication preflight — 16 October 2026
+
+Prepared standalone publishable source under `website/` with the same approved editorial UI and scanner-line removal. Strict TypeScript passed. Public links no longer point to localhost. Dependencies, build cache and Vercel local state are ignored; only application source, lockfile, licensed fonts and production artwork are intended for Git. Local design references and the native wireframe remain ignored. Production build, Git connection and public-route/browser checks are pending Vercel confirmation; prior local checks are not a deployed-site acceptance result.

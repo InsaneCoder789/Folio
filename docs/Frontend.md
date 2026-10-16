@@ -286,3 +286,137 @@ Remaining backend connections are reviewed per page after UI acceptance. Existin
 All 15 routes and both onboarding steps now use the shared native Silk components. Native screen board (local artifact: `output/android/ui-parity-pixel9/screen-board.png`). Captures cover normal text, 200% text and a 320 dp content width at 200% text on the existing Pixel 9 Pro. These are fictional review fixtures rendered through production UI components. Native UI acceptance remains with the user before further backend work.
 
 Reference paths in this specification refer to the preserved local design workspace. Reference HTML, concept artwork and rendered UI frames are excluded from GitHub; only Android runtime artwork remains in the repository.
+
+
+## Folio editorial website - 16 October 2026
+
+The editorial is a separate local presentation at `design/editorial/index.html`, served at `http://127.0.0.1:8770/editorial/`. The existing app wireframe and prototype remain at `design/index.html` and `design/prototype/`; their source hashes were checked unchanged. Do not embed a phone, app screenshot, app iframe or wireframe into the editorial. The user rejected that approach. Keep the app test bench as a separate linked destination.
+
+The revised visual direction uses ink black, bone white, vermilion, oversized Anton typography and generated monochrome scan artwork. Main chapters: Keep what matters; From noise to meaning; The work; source colophon. The motion storyboard at `design/editorial/motion.html` is a separate scrubbable editorial wireframe, not the app wireframe.
+
+WebGL uses local Three.js 0.180.0 and custom vertex/fragment shaders for document displacement, alignment, a scan line and subtle pointer perspective. Rendering is requested on input, resize or scroll and stops when idle/hidden. Desktop uses a native-scroll pinned sequence; mobile and reduced motion use direct step controls without pinning. Static artwork remains when WebGL is unavailable. The transformations are illustrative, not browser OCR inference. Research claims retain the actual frozen IAM metric, unmet target and weaker real-photo diagnostic.
+
+Generated v2 concepts, production artwork, design tokens and exact built-in imagegen prompts are retained under the ignored `design/editorial/` directory. This work does not deploy or push the website.
+
+
+### Separate chapter artwork - 16 October 2026
+
+The accepted black/bone/vermilion direction is retained. The hero keeps `assets/scan-art-v2.png`; the process now uses separately generated `assets/process-art-v3.png`, a front-facing document study with registration marks and extracted text fragments. Independent, section-scoped WebGL scenes prevent the hero from persisting into the process. Mobile, reduced-motion/no-WebGL fallbacks and the motion storyboard use the corresponding chapter artwork. The app wireframe remains separate.
+
+
+## Reusable frontend style library
+
+Saved 16 October 2026 at the user's request. This is the project reference for reusing visual styles; it is not a global preference for every future project. Match a future project's content and scope before adapting a recipe.
+
+### Style index
+
+| Reference name | Character | Appropriate surface | Status |
+| --- | --- | --- | --- |
+| **Folio Industrial Editorial** | Ink black, bone white, vermilion, oversized condensed type, monochrome scan imagery, scroll storytelling | Editorial product websites and research case studies | Current preferred website direction |
+| **Silk Native** | Soft depth, restrained neutral surfaces, generous preview space, compact functional controls | Folio's native Android app and app prototype | Existing accepted app direction; keep separate from the editorial |
+| **Technical HUD** | Navy/black, cyan instrumentation, circular gauges, measured counts and bounded logs | Backend/ML progress monitoring | Existing monitoring direction; not the marketing website |
+| **Warm Paper Editorial** | Ivory, burgundy, expressive serif type, softly floating paper | Archived alternative only | Rejected for this editorial; do not restore as its default |
+
+The detailed Silk app specification remains earlier in this file. The local HUD reference is `output/training-monitor/`; its measured progress must never be replaced with decorative percentages. Rail and offlineQr are user-supplied references for editorial ambition, not templates to copy without inspecting the applicable project.
+
+### Folio Industrial Editorial — style identity
+
+**Practical name:** Industrial Editorial / Kinetic Typography.
+
+This is a descriptive combination, not a claim of one formal design movement. Its influences are Swiss editorial grids, restrained neo-brutalist geometry, photographic archive art direction and motion-led typography. The character comes from scale, contrast, composition and pacing rather than interface decoration.
+
+| Ingredient | Reusable rule |
+| --- | --- |
+| Typography | Condensed uppercase display type at poster scale; small readable supporting sans text; monospaced structural labels |
+| Layout | Asymmetric editorial spreads, open negative space, edge-to-edge bands, fine rules and deliberately varied section density |
+| Palette | Ink-black foundation, bone-white content and one strong vermilion accent |
+| Artwork | Monochrome tactile documents, ink, registration marks and sharp photographic edges |
+| Interaction | Native scrolling, purposeful pinned chapters on desktop, direct controls and subtle pointer depth |
+| Closing | A strong contrasting colophon with real source/resource links |
+
+### Tokens and typography
+
+| Token | Value / use |
+| --- | --- |
+| Background | `#101110` |
+| Primary text | `#edece6` |
+| Accent | `#ff5b35` — selected steps, punctuation, scan marks, primary action and closing band |
+| Secondary text | `#93958f` |
+| Rules | `#363833` |
+| Display font | **Anton**, weight 400; condensed uppercase; approximately `-.025em` to `-.035em` tracking; `.94–1.03` line height |
+| Body font | **Plus Jakarta Sans**; approximately 12–16 px desktop body copy, with readable mobile equivalents |
+| Structural labels | `SFMono-Regular, Consolas, monospace`; approximately 9–11 px; never use tiny labels for essential instructions |
+| Page gutter | `clamp(22px, 4.2vw, 80px)` |
+| Motion easing | `cubic-bezier(.22, 1, .36, 1)` |
+
+Current desktop hero scale is `clamp(115px, 15vw, 260px)`; mobile overrides it to `clamp(72px, 21vw, 134px)`. These are Folio implementation values, not universal settings. Recalculate long-word fit, line breaks, contrast and touch-target sizes for each new project.
+
+### Composition recipe
+
+1. **Opening:** a short oversized headline, one clear action and one cinematic image. Keep hero text as real HTML. No decorative eyebrow or invented proof metric.
+2. **Transformation:** a distinct composition and artwork for the next chapter. Show meaningful change through scrolling; also provide direct step selection.
+3. **Evidence:** reduce visual noise, explain the actual work and label measured results and limitations. Do not animate a score to suggest improving accuracy.
+4. **Colophon:** a deliberate contrasting band, large wordmark and a few useful destinations.
+
+Keep navigation short, controls rectangular, arrows consistent and hover feedback restrained. Avoid rounded card grids, decorative dashboards, ornamental pills, unrelated widgets and repeated copies of the hero image.
+
+**Folio-specific boundary:** the app wireframe belongs exclusively in its separate test bench. Do not embed a phone, app screenshot, iframe or device frame in this editorial or its editorial motion storyboard. Preserve the app UI's own Silk design language.
+
+### Artwork and motion recipe
+
+Use separate generated assets for major chapters while keeping the same palette, lighting and texture language:
+
+- **Hero:** `design/editorial/assets/scan-art-v2.png` — diagonal, layered archival documents and scan light.
+- **Process:** `design/editorial/assets/process-art-v3.png` — front-facing document, registration corners and extracted text fragments.
+- **Concepts:** `design/editorial/concepts/hero-v2.png`, `process-v2.png`, `notes-v2.png`.
+- **Exact generation prompts:** `design/editorial/asset-prompts-v2.json` and `process-art-v3-prompt.json`; built-in imagegen was used.
+
+The independent WebGL scenes use local Three.js with vertex/fragment shaders for fragmentation, alignment, scan movement and subtle perspective. They render on demand and stop while idle or hidden. Do not add an endless background render loop just to make a page feel animated.
+
+Use native scrolling. Preserve reduced-motion support, direct controls, static no-WebGL artwork and a natural mobile reading order. Keep each chapter's own image in these alternatives. Motion illustrates the story; it must not be presented as real OCR execution.
+
+### Reusable design brief
+
+> Create an industrial editorial website for [project] using ink black, bone white and a single vermilion accent. Use oversized condensed uppercase typography, asymmetric Swiss-inspired grids, sharp rules, cinematic monochrome imagery and generous negative space. Give each major chapter distinct artwork within one consistent visual language. Use scroll-driven WebGL only where it explains a transformation, with native scrolling, idle/offscreen rendering gates, reduced-motion alternatives and mobile fallbacks. Keep real copy and controls in HTML. Avoid generic card grids, decorative dashboard chrome, fake metrics and unused controls. Keep any product wireframe or test bench separate unless this project's brief explicitly requests an embed. Ground the content and evidence in the actual product.
+
+### Reuse acceptance checks
+
+- Compare headline/nav copy, type hierarchy, palette, section rhythm and image treatment with the chosen references.
+- Verify every visible action, step control and source link.
+- Check desktop and narrow mobile widths for clipped text, overlap, contrast and horizontal overflow.
+- Verify reduced motion, no-WebGL fallbacks and idle/offscreen rendering behavior.
+- Keep dataset/model results factual and distinguish illustrative scenes from working product behavior.
+- Save new project assets inside that project's workspace; retain prompts and licenses. Do not copy private samples or credentials.
+
+**Live local references:** editorial `http://127.0.0.1:8770/editorial/`; motion storyboard `http://127.0.0.1:8770/editorial/motion.html`; separate app test bench `http://127.0.0.1:8770/`. These URLs require the local preview server.
+
+### Next.js expansion — 16 October 2026
+
+The complete editorial source now lives in ignored `design/folio-web/`, using Next.js App Router, React, TypeScript, local Anton/Jakarta fonts and lazy Three.js. The previous static editorial and original app test bench are preserved. This is the website presentation of the native Kotlin app; browser OCR is not introduced.
+
+| Route | Purpose |
+| --- | --- |
+| `/` | Long-form editorial: opening, six-stage scroll journey, OCR review, interactive card arrangements, accessible PDF comparison, library, supporting features and measured OCR research |
+| `/process` | Detailed capture → correction → review → organization → export → library explanation, output limitations, onboarding/defaults/learning lab, and a text map of all 15 screens |
+| `/motion` | Scrubbable six-chapter editorial storyboard with artwork, triggers, movement and quiet alternatives; no embedded app/device frames |
+
+Six new built-in-imagegen production assets explain capture, perspective correction, handwriting review, fictional card pairing, the two PDF outputs and local organization. The approved opening image remains distinct. Five separate generated design studies informed the expanded spreads. Exact prompts and the reusable design specification are saved in `design/folio-web/design/asset-prompts.json` and `design-spec.json`; generated studies are alongside them. No new Markdown file was created.
+
+The industrial style stays ink black, bone white and vermilion, with oversized condensed type, sharp rules, asymmetric spreads and a contrasting bone-white card section. HTML carries all explanatory copy and controls. Native scrolling drives the desktop workflow; mobile/reduced-motion alternatives use direct chapter controls. WebGL loads on visibility, renders on demand, disposes resources, and falls back to the correct static chapter artwork. Card controls change illustrations; PDF tabs explain the actual export distinction. Neither pretends to process an uploaded document.
+
+Content preserves implementation boundaries: ML Kit is the current app recognizer; custom TrOCR remains experimental and unintegrated; cards are manually confirmed; edited paragraphs need regenerated text or a fresh OCR pass for searchable geometry; newer installed-app and recovery acceptance remain open. The measured 66.15% frozen exact-line result and unmet 75–80% target remain explicit.
+
+**Verification state:** artwork/provenance checks passed for seven distinct images; all 17 protected test-bench hashes match; `/docs` still contains exactly six Markdown files. Dependency installation, production build and the new browser matrix must complete before this Next.js version is described as browser verified. Planned preview port: `8771`; existing static preview remains on `8770`.
+
+
+### Scanner-line removal — 16 October 2026
+
+Removed the animated vermilion scan-line shader from the Next.js editorial; existing edge fades, image disappearance/crossfade and document motion remain. Storyboard wording matches. The preview now runs in development mode on the same port, 8771, so refinements appear immediately. A targeted browser check also found 13px of mobile library-art overflow; clipping that artwork composition fixes it without changing the layout.
+
+### Public website source and deployment — 16 October 2026
+
+`website/` is the publishable Next.js application in the Folio GitHub repository. It contains the three editorial routes, application source, seven production artworks, local fonts/licenses and a pinned npm lockfile. It excludes generated reference studies, local wireframe HTML, browser tooling, datasets, model artifacts, local credentials and development outputs. `design/` remains ignored and its app test bench is preserved.
+
+Vercel must use Root Directory `website`, Next.js, Node 22, `npm ci` and `npm run build`, connected to `InsaneCoder789/Folio` with production branch `main`. Only the website is built and deployed; Android and ML retain their own workflows. The website has no required secret/environment variables or cloud OCR service. Public resource links lead to the GitHub native design guide instead of a visitor's localhost. The local test bench is not published.
+
+This production source is the version to edit for future website releases. `design/folio-web/` preserves the earlier local presentation. Vercel project creation and production deployment are pending live confirmation at this entry.
