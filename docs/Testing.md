@@ -1,5 +1,37 @@
 # Testing and acceptance
 
+## Portfolio Acceptance Audit - 16 October 2026
+
+The existing tests already cover native capture (`NativeCameraTest`), crop/OCR and
+both PDF screens (`NativeDocumentFlowTest`), activity recreation and failed-import
+recovery (`NativeRecoveryTest`), and transactional repository failure handling
+(`RepositoryPipelineTest`, `WorkflowPersistenceTest`). Do not duplicate those tests
+or reinterpret browser-prototype evidence as native acceptance.
+
+Added `RepositoryPipelineTest.correctedReviewedDocumentAndPdfSurviveRepositoryRestart`:
+import a synthetic page, apply grayscale correction, run the app's ML Kit OCR,
+save reviewed text, generate a real text PDF, close/reopen the disk database and
+repository, then verify retained correction/text/export metadata, unchanged PDF
+bytes and searchable reviewed text. Instrumentation compilation passed locally
+on 16 October; device execution is pending. It does not measure recognition accuracy or prove Android
+process-death recovery: database reopening and activity recreation are narrower.
+
+From `android/`, with a configured SDK/JDK:
+
+```sh
+./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebugAndroidTest
+# Requires an attached disposable test device/emulator:
+./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.rohanc.ocrscanner.feature.NativeCameraTest,com.rohanc.ocrscanner.feature.NativeDocumentFlowTest,com.rohanc.ocrscanner.feature.NativeRecoveryTest,com.rohanc.ocrscanner.data.RepositoryPipelineTest,com.rohanc.ocrscanner.data.WorkflowPersistenceTest
+```
+
+No device was attached during this audit, so no fresh installed-app pass is claimed.
+Archive `app/build/outputs/androidTest-results/connected/` and reports from the
+actual run. A compiled APK or this command listing is not an executed-device result.
+Physical camera quality, force-stop/relaunch recovery and cancellation during
+export remain separate acceptance checks. Keep the existing ML Kit, custom TrOCR
+development-quality and standalone mobile-parity evidence separately labelled;
+the prior experimental CER/WER limitations are not improved by this storage test.
+
 Native foundation source and tests have now been authored; native build/device evidence is recorded separately below. Browser design-prototype checks are recorded below. Existing architecture PDF pages were rendered and visually reviewed during creation.
 
 ## 8. Validation plan

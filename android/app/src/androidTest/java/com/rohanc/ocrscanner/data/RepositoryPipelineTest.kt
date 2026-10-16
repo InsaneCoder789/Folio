@@ -93,4 +93,44 @@ class RepositoryPipelineTest {
             assertEquals("Persistent draft",db.scannerDao().snapshot(created.document.id)?.document?.title)
         }finally{db.close();context.deleteDatabase(name)}
     }
+
+    @Test fun correctedReviewedDocumentAndPdfSurviveRepositoryRestart()=runBlocking{
+        val name="folio-export-restart-${java.util.UUID.randomUUID()}.db"
+        var db=Room.databaseBuilder(context,ScannerDatabase::class.java,name).build()
+        val images=PrivateImageStore(context)
+        var id:String?=null
+        val fixture=File.createTempFile("folio-restart-",".jpg",context.cacheDir)
+        try{
+            val bitmap=Bitmap.createBitmap(1000,500,Bitmap.Config.ARGB_8888)
+            try{
+                val canvas=Canvas(bitmap);canvas.drawColor(Color.WHITE)
+                canvas.drawText("FOLIO RESTART",60f,180f,Paint(Paint.ANTI_ALIAS_FLAG).apply{color=Color.BLACK;textSize=64f})
+                fixture.outputStream().use{bitmap.compress(Bitmap.CompressFormat.JPEG,98,it)}
+            }finally{bitmap.recycle()}
+            val repo=DocumentRepository(db,images,MlKitOcrEngine(),pdf=ScannerPdfExporter(context))
+            val document=repo.create("Persisted reviewed export");id=document.document.id
+            repo.importImage(document.document.id,0,Uri.fromFile(fixture))
+            var snapshot=repo.snapshot(document.document.id)
+            val region=snapshot.regions.single();val capture=snapshot.captures.single()
+            repo.correct(document.document.id,snapshot.document.revision,region.id,EditRecipe(Quad.full(capture.width,capture.height),enhancement=Enhancement.GRAYSCALE))
+            repo.recognize(document.document.id,region.id)
+            snapshot=repo.snapshot(document.document.id)
+            assertTrue(snapshot.regions.single().recognizedText!!.contains("FOLIO"))
+            repo.saveReview(document.document.id,snapshot.document.revision,region.id,"Reviewed text survives restart.")
+            snapshot=repo.snapshot(document.document.id)
+            val export=repo.export(document.document.id,snapshot.document.revision,"TEXT")
+            val bytes=File(export.path).readBytes()
+            db.close()
+            db=Room.databaseBuilder(context,ScannerDatabase::class.java,name).build()
+            val reopened=DocumentRepository(db,images,MlKitOcrEngine(),pdf=ScannerPdfExporter(context)).snapshot(document.document.id)
+            assertEquals("Persisted reviewed export",reopened.document.title)
+            assertEquals("Reviewed text survives restart.",reopened.regions.single().reviewedText)
+            assertEquals("GRAYSCALE",reopened.regions.single().enhancement)
+            assertEquals(export,reopened.exports.single())
+            assertArrayEquals(bytes,File(reopened.exports.single().path).readBytes())
+            com.tom_roush.pdfbox.pdmodel.PDDocument.load(File(export.path)).use{pdf->
+                assertTrue(com.tom_roush.pdfbox.text.PDFTextStripper().getText(pdf).contains("Reviewed text survives restart."))
+            }
+        }finally{fixture.delete();db.close();context.deleteDatabase(name);id?.let{images.removeDocument(it)}}
+    }
 }
