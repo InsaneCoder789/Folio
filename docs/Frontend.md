@@ -453,3 +453,10 @@ Settings → Appearance switches Light/Dark immediately and persists in the prot
 The Kotlin app implements equivalent immutable palette tokens through a CompositionLocal and Material 3 colour schemes, palette-aware Silk shadows and system bars. Native Settings → Appearance persists through ScannerPreferences immediately, retaining unsaved paper/quality edits; Save defaults keeps the active appearance. Existing native users retain a light default, now green-accented. Native typography and processing behavior are preserved. A build, contrast test and compiled recreation/persistence instrumentation test are pending Android verification; no emulator is currently connected and none is started automatically.
 
 Appearance is an explicitly requested prototype behavior extension: app.js/state.js change only to add and persist the setting, and appearance.js supplies the palette update. The source-integrity manifest retains original baseline hashes plus current hashes; it no longer claims every interaction module is unchanged. The original ignored local design bench remains untouched.
+
+
+### Editorial copy cleanup — 17 October 2026
+
+Public editorial pages use headings, artwork and concise feature explanations without section-number strips, image captions, implementation-status stamps or internal acceptance notes. The hero no longer includes “Follow the page” or its process/status footer. Workflow navigation, PDF/card controls, the fifteen-screen guide and the separate prototype remain functional. Research measurements retain their scope and experimental status.
+
+Verification: TypeScript passed. Chrome checked `/`, `/process` and `/motion` at 1440×1000 and 390×844: HTTP 200, expected page headings, no framework error overlay, no page/console errors and no horizontal overflow. Card Grid selection, regenerated PDF tab, workflow chapter changes, process anchors, all fifteen screen entries and storyboard Next were exercised. Browser plugin unavailable; existing Playwright/Chrome used without installing dependencies. Evidence is local in `/tmp/folio-cleanup-report.json` and `/tmp/folio-clean-*.png`.
