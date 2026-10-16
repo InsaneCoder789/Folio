@@ -433,3 +433,12 @@ A Next route handler serves the player document at `/prototype-player`; no refer
 The seventeen protected original design-bench files are unchanged. `/docs` still has exactly six Markdown files. Next.js automatic agent-document generation is disabled to preserve that documentation constraint. Local development for the publishable website uses port 8772 with Webpack because the existing local dependency directory is symlinked; production continues using Vercel's independent installation. Verification and deployment status are recorded in Testing.md.
 
 **Published prototype:** https://folio-rochiees-projects.vercel.app/prototype — READY from `e9cbc81`, verified in production on desktop and mobile and opened in the in-app browser. Future changes to the prototype theme belong in `website/public/prototype/editorial.css`; keep the original interaction modules intact unless a behavior change is explicitly requested.
+
+
+### Prototype workspace reference correction — 17 October 2026
+
+The user clarified the intended presentation with a screenshot of the original complete Prototype workspace. `/prototype` therefore uses that three-column composition: screen explorer and first-run replay controls on the left, a centred rounded phone preview, and selected-screen purpose/connections/design decisions on the right. The header contains the Folio workspace identity, the single Prototype view and a return link to the editorial; no Wireframe tab or inventory is published.
+
+The editorial ink/bone/vermilion palette and Anton/Jakarta fonts remain. Original rounded native controls and soft depth are retained, replacing the prior flat-control treatment. The four interaction modules and original base stylesheet remain byte-identical. Screen metadata is copied from the existing fifteen-screen design inventory. Explorer selection changes the phone, and validated same-origin messages from that phone update the selected row and details. Re-selecting an earlier screen after in-phone navigation reopens the requested screen correctly. Boot/onboarding replay and Open phone view remain functional.
+
+At tablet widths the details panel collapses as in the original workspace. On narrow screens, a compact functional screen selector keeps every route reachable while the phone fills the available width. Main editorial routes and the original local design workspace remain intact.
