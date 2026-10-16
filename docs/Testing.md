@@ -662,3 +662,12 @@ After removing the animated scan-line shader, targeted installed-Chrome verifica
 ### Website publication preflight — 16 October 2026
 
 Prepared standalone publishable source under `website/` with the same approved editorial UI and scanner-line removal. Strict TypeScript passed. Public links no longer point to localhost. Dependencies, build cache and Vercel local state are ignored; only application source, lockfile, licensed fonts and production artwork are intended for Git. Local design references and the native wireframe remain ignored. Production build, Git connection and public-route/browser checks are pending Vercel confirmation; prior local checks are not a deployed-site acceptance result.
+
+
+### Vercel production acceptance — 16 October 2026
+
+Deployment `dpl_7q8dsGuYnTLchoHbY4koFYZEg2pg` reached READY from GitHub commit `c94270f` in project `folio` / team `rochiees-projects`. Remote production build completed in 34 seconds using Next.js, Node 22 and the isolated `website/` root. The Vercel Git context confirms the project is linked to `InsaneCoder789/Folio`. Production URL: https://folio-rochiees-projects.vercel.app.
+
+Anonymous HTTP checks passed for `/`, `/process` and `/motion`: HTTP 200, expected Folio content, no localhost references and no Vercel-login redirect. Targeted installed-Chrome production verification passed at 1536x1024 and 390x844: WebGL initialization, regenerated-text PDF tab, card grid selector, public native-design guide link, all fifteen screen entries and six process chapters, storyboard Next control, mobile horizontal fit, and no page/console errors. Production desktop/mobile screenshots were inspected; report `/tmp/folio-vercel-smoke.json`. This is a deployed-site smoke check, not a re-run of every earlier local test or physical-browser/Android acceptance.
+
+Future main-branch pushes remain connected to Vercel. Ignored Build Step `git diff HEAD^ HEAD --quiet -- .` is configured relative to `website/`, so Android, ML and docs-only changes skip the website build. The Android app, datasets, model files, local test bench and design-reference HTML were not added to the website deployment.
