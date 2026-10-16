@@ -1,0 +1,12 @@
+{
+  "source": "Original Folio interactive prototype",
+  "files": {
+    "app.js": "06f0527499b0363671006cd873e3a35af8d41d9f6f781c0156376a01c738b477",
+    "components.js": "a17680f6b105a6026fad1638a31a861bcdfd278f8f005830dae230b1b2c3980c",
+    "screens.js": "aa082f95764dcef70452cd8285648cc5ab3de11cb1544c110a6a461255670847",
+    "state.js": "e81d3f23fab6508be56c901b1bec99062018eadeecd9f5e3410674c34e58557f",
+    "style.css": "671a08c644eaf22462a662b8cd8daa41f3b1f394581d657e5af140f7334ee11f"
+  },
+  "theme": "editorial.css adds presentation overrides; source files retain their original bytes.",
+  "scope": "Interactive design preview. OCR/PDF generation are simulated."
+}
